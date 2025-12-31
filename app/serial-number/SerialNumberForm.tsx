@@ -18,15 +18,42 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks";
+import { useEffect } from "react";
+import z from "zod";
+import { createSerialNumber } from "../Redux/features/serialNumberSlice";
 
-interface Props {
-  onSubmit: (data: SerialNumberFormValues) => void;
-}
+export default function SerialNumberForm() {
+  const dispatch = useAppDispatch();
+  const { currentSerialNumber, loading } = useAppSelector(
+    (state) => state.serialNumber
+  );
 
-export default function SerialNumberForm({ onSubmit }: Props) {
   const form = useForm<SerialNumberFormValues>({
     resolver: zodResolver(serialNumberSchema),
   });
+
+  useEffect(() => {
+    if (currentSerialNumber) {
+      form.setValue("prefix", currentSerialNumber.prefix);
+      form.setValue("startNumber", currentSerialNumber.startNumber);
+      form.setValue("currentNumber", currentSerialNumber.currentNumber);
+    }
+  }, [currentSerialNumber, form]);
+
+  function onSubmit(values: z.infer<typeof serialNumberSchema>) {
+    try {
+      if(currentSerialNumber){
+          dispatch(createSerialNumber(values));
+      }else{
+
+      }
+    } catch (error) {
+      
+    }
+    console.log(values);
+  }
 
   return (
     <Form {...form}>
@@ -55,7 +82,15 @@ export default function SerialNumberForm({ onSubmit }: Props) {
             <FormItem>
               <FormLabel>Start Number *</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input type="text" inputMode="numeric"  {...field} 
+                onChange={(e) => {
+            // Remove letters, symbols, decimals
+            const cleaned = e.target.value.replace(/[^0-9]/g, "");
+
+            // Convert to number or empty
+            field.onChange(cleaned ? Number(cleaned) : "");
+          }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -69,16 +104,30 @@ export default function SerialNumberForm({ onSubmit }: Props) {
             <FormItem>
               <FormLabel>Current Number *</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input type="text" inputMode="numeric" {...field} 
+                onChange={(e) => {
+            // Remove letters, symbols, decimals
+            const cleaned = e.target.value.replace(/[^0-9]/g, "");
+
+            // Convert to number or empty
+            field.onChange(cleaned ? Number(cleaned) : "");
+          }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <Button type="submit" className="w-full">
-          Save Serial
-        </Button>
+        <div className="flex justify-end">
+         {currentSerialNumber ? 
+          <Button type="submit" className="w-full">
+            UPDATE
+          </Button> :
+          <Button type="submit" className="w-full">
+            SAVE
+          </Button>
+          } 
+        </div>
       </form>
     </Form>
   );

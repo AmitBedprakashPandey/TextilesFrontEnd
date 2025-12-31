@@ -1,7 +1,8 @@
-import CompanyForm from "@/app/company/CompanyForm"
+"use client"
+
 import { Button } from "./ui/button"
 import { X } from "lucide-react"
-import { useEffect } from "react"
+import React,{ useEffect } from "react"
 
 interface props {
     open: boolean,

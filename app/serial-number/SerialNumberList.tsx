@@ -1,16 +1,10 @@
 import { Button } from "@/components/ui/button";
-
-interface SerialNumber {
-  id: number;
-  prefix: string;
-  startNumber: number;
-  currentNumber: number;
-}
+import { serialNumberState } from "../Redux/features/serialNumberSlice";
 
 export default function SerialNumberList({
   data,
 }: {
-  data: SerialNumber[];
+  data: serialNumberState[];
 }) {
   return (
     <div className=" rounded-xl overflow-hidden">
@@ -34,7 +28,7 @@ export default function SerialNumberList({
           )}
 
           {data.map((item, i) => (
-            <tr key={item.id} className="border-t">
+            <tr key={item._id} className="border-t">
               <td className="p-2">{i + 1}</td>
               <td className="p-2">{item.prefix}</td>
               <td className="p-2">{item.startNumber}</td>

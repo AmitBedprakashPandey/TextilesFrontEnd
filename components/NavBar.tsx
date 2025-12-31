@@ -47,7 +47,9 @@ export default function NavBar() {
             <DropdownMenu>
                 <DropdownMenuTrigger className="focus-visible:outline-none text-white">Fabric</DropdownMenuTrigger>
                 <DropdownMenuContent>
+                    <Link href={"/customer"}>
                     <DropdownMenuItem>Customer</DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem>Tailor</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
