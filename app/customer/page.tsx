@@ -126,7 +126,26 @@ export default function Page() {
 
 
         console.log(finalPayload);
+        // ✅ RESET FORM AND METERS
+    form.reset({
+        company: "",
+        vendor: "",
+        date: new Date().toISOString().split("T")[0],
+        groups: Array.from({ length: METER_GROUPS }, () => ({
+            groupNo: 1,
+            pattern: "",
+            rate: 0,
+            meters: Array(TOTAL_INPUTS).fill(0),
+            totalMeters: 0,
+            thaans: 0,
+        })),
+        grandTotalMeters: 0,
+        grandTotalThaans: 0,
+    });
 
+    setMeters(
+        Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
+    );
         alert("Data submitted! Check console.")
         // You can replace console.log with a POST request to your backend
     }
