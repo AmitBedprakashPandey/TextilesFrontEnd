@@ -121,3 +121,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+@page{
+  size: A4;
+  margin: 12rem;
+}

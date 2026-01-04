@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 export default function NavBar() {
-    return (<div className="flex py-3 px-10 justify-between items-center border-b z-50 bg-red-500">
+    return (<div className="flex py-3 px-10 justify-between items-center border-b z-50 bg-red-500 print:hidden">
         <div>
             <h1 className="text-white">Dashboard</h1>
         </div>

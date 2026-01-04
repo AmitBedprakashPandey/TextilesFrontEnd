@@ -45,7 +45,7 @@ export default function SerialNumberForm() {
   function onSubmit(values: z.infer<typeof serialNumberSchema>) {
     try {
       if(currentSerialNumber){
-          dispatch(createSerialNumber(values));
+          // dispatch(createSerialNumber(values));
       }else{
 
       }

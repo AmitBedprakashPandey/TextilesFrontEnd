@@ -1,63 +1,71 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react"
 import { Input } from "@/components/ui/input"
 import Select from 'react-select'
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { toast } from "sonner"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { error, log } from "console"
 
-type FabricRow = {
-    rate: number
-    qty: number
-    thaans: number
-    meters: number[]
+type OptionType = {
+    value: string
+    label: string
 }
 
-const options = [
+const options: OptionType[] = [
     { value: 'chocolate', label: 'Chocolate' },
     { value: 'strawberry', label: 'Strawberry' },
     { value: 'vanilla', label: 'Vanilla' }
 ]
 
-
-type NumberFields = "rate" | "qty" | "thaans"
-
 const METER_GROUPS = 3
 const TOTAL_INPUTS = 100
 
+const formSchema = z.object({
+    company: z.string().min(1),
+    vendor: z.string().min(1),
+    date: z.string().min(1),
+    groups: z.array(z.object({
+        groupNo: z.number().min(1),
+        pattern: z.string().nullable().optional(),
+        rate: z.number().min(0),
+        meters: z.array(z.number().min(0)),
+        totalMeters: z.number().min(0),
+        thaans: z.number().min(0),
+    })).min(1).refine(
+        groups =>
+            groups.some(
+                g =>
+                    g.pattern &&
+                    g.pattern.trim() !== "" &&
+                    g.meters.some(m => m > 0)
+            ),
+        {
+            message: "Select a Fabric and enter at least one meter",
+            path: ["groups"],
+        }
+    )
+
+    ,
+    grandTotalMeters: z.number().min(0),
+    grandTotalThaans: z.number().min(0),
+});
 
 export default function Page() {
 
-     const [company, setCompany] = useState<typeof options[0] | null>(null)
-  const [vendor, setVendor] = useState<typeof options[0] | null>(null)
-  const [date, setDate] = useState("")
- const [patterns, setPatterns] = useState<(typeof options[0] | null)[]>(
-    Array(METER_GROUPS).fill(null)
-  )
-
-
     const [meters, setMeters] = useState<number[][]>(
         Array.from({ length: METER_GROUPS }, () =>
-            Array(TOTAL_INPUTS).fill(null)
+            Array(TOTAL_INPUTS).fill(0)
         )
     )
-
-
-
     // one ref per input (stable)
-    const inputRefs = useRef<(HTMLInputElement | null)[][]>([])
-
-    useEffect(() => {
-        document.body.style.overflowX = "hidden"
-        return () => {
-            document.body.style.overflowX = "auto"
-        }
-
-    }, [])
-
-    
-
 
     const handleChange = (
         groupIndex: number,
@@ -71,22 +79,6 @@ export default function Page() {
         })
     }
 
-
-    const handleKeyDown = (
-        e: React.KeyboardEvent<HTMLInputElement>,
-        groupIndex: number,
-        inputIndex: number
-    ) => {
-        if (e.key === "Enter") {
-            e.preventDefault()
-            const nextInput = inputRefs.current[groupIndex]?.[inputIndex + 1]
-            if (nextInput) {
-                nextInput.focus();
-                nextInput.select();
-            }
-        }
-    }
-
     const getTotalMeters = (groupIndex: number) => meters[groupIndex].reduce((sum, val) => sum + (val > 0 ? val : 0), 0)
     const getTotalThaans = (groupIndex: number) => meters[groupIndex].reduce((sum, val) => sum + (val !== 0 ? 1 : 0), 0)
 
@@ -95,192 +87,391 @@ export default function Page() {
 
     const getGrandTotalThaans = () => meters.reduce((grandSum, group) => grandSum + group.reduce((sum, val) => sum + (val !== 0 ? 1 : 0), 0), 0)
 
-
-
-const onSubmit = () => {
-    const payload = meters.map((group, groupIndex) => {
-        if(!patterns[groupIndex]) return null
-        return{
-
-            groupNo: groupIndex + 1,
-            pattern: patterns[groupIndex]?.value || null,
-            meters: group,
-            totalMeters: getTotalMeters(groupIndex),
-            thaans: getTotalThaans(groupIndex),
+    const form = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            company: "",
+            vendor: "",
+            date: new Date().toISOString().split("T")[0],
+            groups: Array.from({ length: METER_GROUPS }, () => ({
+                groupNo: 1,
+                pattern: "",
+                rate: 0,
+                meters: Array(TOTAL_INPUTS).fill(0),
+                totalMeters: 0,
+                thaans: 0,
+            })),
+            grandTotalMeters: getGrandTotalMeters(),
+            grandTotalThaans: getGrandTotalThaans(),
         }
-    })
+    });
 
-    const dataToSave = {
-      company: company?.value || null,
-      vendor: vendor?.value || null,
-      date,
-      groups: payload,
-      grandTotalMeters: getGrandTotalMeters(),
-      grandTotalThaans: getGrandTotalThaans(),
+
+    const onSubmit = (data: z.infer<typeof formSchema>) => {
+        const filteredGroups = data.groups
+            .map(group => ({
+                ...group,
+                meters: group.meters.filter(m => m > 0),
+            }))
+            .filter(
+                group =>
+                    group.pattern &&
+                    group.pattern.trim() !== "" &&
+                    group.meters.length > 0
+            );
+
+        const finalPayload = {
+            ...data,
+            groups: filteredGroups,
+        };
+
+
+        console.log(finalPayload);
+
+        alert("Data submitted! Check console.")
+        // You can replace console.log with a POST request to your backend
     }
 
-    console.log("Submitted Data:", dataToSave)
-    alert("Data submitted! Check console.")
-    // You can replace console.log with a POST request to your backend
-  }
+    const { setValue } = form
 
-useEffect(() => {
-  const handleCtrlS = (e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "s") { // Ctrl+S (or Cmd+S on Mac)
-      e.preventDefault() // prevent browser save
-      onSubmit()
-    }
-  }
+    useLayoutEffect(() => {
+        document.body.style.overflowX = "hidden"
 
-  window.addEventListener("keydown", handleCtrlS)
-  return () => window.removeEventListener("keydown", handleCtrlS)
-}, [])
+        return () => {
+            document.body.style.overflowX = "auto"
+        }
+
+    }, [])
+
+    const submitForm = form.handleSubmit(onSubmit,error => toast.warning(error.groups?.groups?.message));
+
+    useEffect(() => {
+        const handleCtrlS = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "s") { // Ctrl+S (or Cmd+S on Mac)
+                e.preventDefault() // prevent browser save
+
+
+                submitForm()
+
+            }
+        }
+
+        window.addEventListener("keydown", handleCtrlS)
+        return () => window.removeEventListener("keydown", handleCtrlS)
+    }, []);
+
+    // calculate total meters/ thans
+    useEffect(() => {
+        let grandMeters = 0
+        let grandThaans = 0
+
+        meters.forEach((group, groupIndex) => {
+            const totalMeters = group.reduce(
+                (sum, val) => sum + (val > 0 ? val : 0),
+                0
+            )
+
+            const thaans = group.filter(val => val !== 0).length
+
+            // ✅ STORE ONLY NON-ZERO METERS
+            const nonZeroMeters = group.filter(val => val !== 0)
+
+            setValue(`groups.${groupIndex}.meters`, nonZeroMeters, {
+                shouldDirty: true,
+                shouldValidate: true,
+            });
+
+            // 🔹 set group totals
+            setValue(`groups.${groupIndex}.totalMeters`, totalMeters)
+            setValue(`groups.${groupIndex}.thaans`, thaans)
+
+            grandMeters += totalMeters
+            grandThaans += thaans
+        })
+
+        // 🔹 set grand totals
+        setValue("grandTotalMeters", grandMeters)
+        setValue("grandTotalThaans", grandThaans)
+    }, [meters, setValue])
+
+    const formRef = useRef<HTMLFormElement>(null);   
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key !== "Enter") return;
+
+        e.preventDefault(); // 🚫 never submit
+
+        const form = formRef.current;
+        if (!form) return;
+
+        const focusable = Array.from(
+            form.querySelectorAll<HTMLElement>(
+                `
+      input:not([disabled]),
+      textarea:not([disabled]),
+      button:not([disabled]),
+      [tabindex]:not([tabindex="-1"])
+      `
+            )
+        ).filter(el => el.offsetParent !== null);
+
+        // 🔥 detect react-select inner input
+        const current =
+            (e.target as HTMLElement).closest(".rs__input")?.querySelector("input") ||
+            (e.target as HTMLElement);
+
+        const index = focusable.indexOf(current as HTMLElement);
+        if (index === -1) return;
+
+        // ⬇️ ENTER / SHIFT+ENTER
+        const nextIndex = e.shiftKey ? index - 1 : index + 1;
+        const next = focusable[nextIndex];
+
+        if (!next) return;
+
+        // 🔥 react-select focus fix
+        if (next.classList.contains("rs__control")) {
+            (next.querySelector("input") as HTMLInputElement)?.focus();
+        } else {
+            next.focus();
+        }
+    };
+
+
 
     return (
         <div className="w-full max-w-11/12 px-3  overflow-x-hidden relative mx-auto">
-            <div className="p-3 flex justify-between items-center">
-                <Label>Customer Fabric Entry</Label>
-                <Button type="button" >Fabric Entry List</Button>
-            </div>
-            <div className="space-y-3 ">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-                    <div className="">
-                        <Label className="pb-3">Company Name</Label>
-                        <Select options={options} autoFocus theme={(theme) => ({
-                            ...theme,
-                            colors: {
-                                ...theme.colors,
-                                neutral0: "var(--background)",
-                                neutral80: "var(--foreground)",
-                                primary25: "var(--accent)",
-                                primary: "var(--ring)",
-                            },
-                        })} />
-                    </div>
+            <Card className="mt-3">
+                <CardHeader className="flex justify-between items-center">
+                    <Label>Customer Fabric Entry</Label>
+                    <Button type="button" >Fabric Entry List</Button>
+                </CardHeader>
+            </Card>
 
-                    <div className="">
-                        <Label className="pb-3">Vendor Name</Label>
-                        <Select options={options} theme={(theme) => ({
-                            ...theme,
-                            colors: {
-                                ...theme.colors,
-                                neutral0: "var(--background)",
-                                neutral80: "var(--foreground)",
-                                primary25: "var(--accent)",
-                                primary: "var(--ring)",
-                            },
-                        })} />
-                    </div>
+            <Form  {...form}>
+                <form onKeyDown={handleKeyDown} ref={formRef} onSubmit={submitForm}>
+                    <div className="space-y-3 ">
+                        <Card className="mt-3">
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                                <FormField
+                                    control={form.control}
+                                    name="company"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Name</FormLabel>
+                                            <FormControl>
+                                                <Select<OptionType>
+                                                    tabIndex={0}
+                                                    classNamePrefix={"react-select"}
+                                                    value={options.find(o => o.value === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?.value)}
+                                                    options={options}
+                                                    getOptionValue={(opt) => opt.value}
+                                                    getOptionLabel={(opt) => opt.label}
+                                                    isSearchable={true}
+                                                    isClearable={true}
+                                                    placeholder="Select Company"
+                                                    autoFocus
+                                                    theme={(theme) => ({
+                                                        ...theme,
+                                                        colors: {
+                                                            ...theme.colors,
+                                                            neutral0: "var(--background)",
+                                                            neutral80: "var(--foreground)",
+                                                            primary25: "var(--accent)",
+                                                            primary: "var(--ring)",
+                                                        },
+                                                    })} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
 
-                    <div className="">
-                        <Label className="pb-3">Date</Label>
-                        <Input type="date" className="w-48" />
-                    </div>
+                                <FormField
+                                    control={form.control}
+                                    name="vendor"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Vendor Name</FormLabel>
+                                            <FormControl>
+                                                <Select<OptionType>
+                                                    tabIndex={0}
+                                                    classNamePrefix={"react-select"}
+                                                    value={options.find(o => o.value === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?.value)}
+                                                    options={options}
+                                                    getOptionValue={(opt) => opt.value}
+                                                    getOptionLabel={(opt) => opt.label}
+                                                    isSearchable={true}
+                                                    placeholder="Select vendor"
+                                                    theme={(theme) => ({
+                                                        ...theme,
+                                                        colors: {
+                                                            ...theme.colors,
+                                                            neutral0: "var(--background)",
+                                                            neutral80: "var(--foreground)",
+                                                            primary25: "var(--accent)",
+                                                            primary: "var(--ring)",
+                                                        },
+                                                    })} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
 
-                    <div className="">
-                        <Label className="pb-3">Total Qty.</Label>
-                        <Input type="number" value={getGrandTotalMeters()} placeholder="Total Quantity" className="max-w-" disabled />
-                    </div>
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date</FormLabel>
+                                            <FormControl>
+                                                <Input type="date"  {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
+                                <FormField
+                                    control={form.control}
+                                    name="grandTotalMeters"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Qty.</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" disabled {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
+                                <FormField
+                                    control={form.control}
+                                    name="grandTotalThaans"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Thaans</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" disabled  {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
+                            </CardContent>
+                        </Card>
+                        <Separator />
+                        {/* Meter Grid 3 time */}
+                        <div className="grid grid-cols-1  lg:grid-cols-1  gap-4">
+                            {meters.map((group, groupIndex) => (
+                                <div key={groupIndex} className="flex gap-3">
+                                    <div className="">
+                                        {/* HEADER */}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div>No. {groupIndex + 1}</div>
+                                            <FormField
+                                                control={form.control}
+                                                name={`groups.${groupIndex}.pattern`}
+                                                render={({ field }) => (
+                                                    <FormItem className="w-sm">
+                                                        <FormLabel>Fabri</FormLabel>
+                                                        <FormControl>
+                                                            <Select<OptionType>
+                                                                {...field}
+                                                                classNamePrefix={"react-select"}
+                                                                value={options.find(o => o.value === field.value) ?? null}
+                                                                onChange={(val) => field.onChange(val?.value)}
+                                                                options={options}
+                                                                getOptionValue={(opt) => opt.value}
+                                                                getOptionLabel={(opt) => opt.label}
+                                                                isSearchable={true}
+                                                                isClearable={true}
+                                                                placeholder="Select Company"
 
-                    <div className="">
-                        <Label className="pb-3">Total Thaans.</Label>
-                        <Input type="number" value={getGrandTotalThaans()} placeholder="Total Thaans" className="max-w-72" disabled />
-                    </div>
-                </div>
-                <Separator />
-                {/* Meters 100 time each input calculate value sum */}
-                <div className="grid grid-cols-1  lg:grid-cols-3  gap-4">
+                                                                theme={(theme) => ({
+                                                                    ...theme,
+                                                                    colors: {
+                                                                        ...theme.colors,
+                                                                        neutral0: "var(--background)",
+                                                                        neutral80: "var(--foreground)",
+                                                                        primary25: "var(--accent)",
+                                                                        primary: "var(--ring)",
+                                                                    },
+                                                                })} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
 
 
-                    {meters.map((group, groupIndex) => (
-                        <div key={groupIndex} className="flex gap-3">
-                            <div className="">
-                                {/* HEADER */}
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div>No. {groupIndex + 1}</div>
+                                            <FormField
+                                                control={form.control}
+                                                name={`groups.${groupIndex}.rate`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Rate</FormLabel>
+                                                        <FormControl>
+                                                            <Input onFocus={e => e.target.select()} type="number" {...field} onChange={(e) => form.setValue(`groups.${groupIndex}.rate`, Number(e.target.value) || 0)} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`groups.${groupIndex}.totalMeters`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Qty.</FormLabel>
+                                                        <FormControl>
+                                                            <Input disabled type="number" {...field} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                    <div>
-                                        <Label className="pb-3">Patterns</Label>
-                                        <Select options={options} className="w-64" theme={(theme) => ({
-                                            ...theme,
-                                            colors: {
-                                                ...theme.colors,
-                                                neutral0: "var(--background)",
-                                                neutral80: "var(--foreground)",
-                                                primary25: "var(--accent)",
-                                                primary: "var(--ring)",
-                                            },
-                                        })}
-                                        value={patterns[groupIndex]}
-                        onChange={(val) => {
-                          const newPatterns = [...patterns]
-                          newPatterns[groupIndex] = val
-                          setPatterns(newPatterns)
-                        }}
-                                        
-                                        />
+                                            <FormField
+                                                control={form.control}
+                                                name={`groups.${groupIndex}.thaans`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Thaans</FormLabel>
+                                                        <FormControl>
+                                                            <Input disabled type="number" {...field} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        {/* 100 INPUTS */}
+                                        <div className="grid grid-cols-12  gap-2 mb-3">
+                                            {group.map((value, inputIndex) => (
+                                                <Input
+                                                    key={inputIndex}
+                                                    type="number"
+                                                    min={0}
+                                                    className=""
+                                                    value={value}
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e =>
+                                                        handleChange(
+                                                            groupIndex,
+                                                            inputIndex,
+                                                            Number(e.target.value) || 0
+                                                        )
+                                                    }
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <Label>Qty.</Label>
-                                        <Input
-                                            type="number"
-                                            value={getTotalMeters(groupIndex)}
-                                            disabled
-                                            className="w-32"
-                                        />
-                                    </div>
 
-                                    <div>
-                                        <Label>Thaans</Label>
-                                        <Input
-                                            type="number"
-                                            value={getTotalThaans(groupIndex)}
-                                            disabled
-                                            className="w-32"
-                                        />
-                                    </div>
                                 </div>
-
-                                {/* 100 INPUTS */}
-                                <div className="grid grid-cols-4  gap-2">
-                                    {group.map((value, inputIndex) => (
-                                        <Input
-                                            key={inputIndex}
-                                            ref={el => {
-                                                if (!inputRefs.current[groupIndex]) {
-                                                    inputRefs.current[groupIndex] = []
-                                                }
-                                                inputRefs.current[groupIndex][inputIndex] = el
-                                            }}
-                                            type="number"
-                                            min={0}
-                                            value={value}
-                                            onChange={e =>
-                                                handleChange(
-                                                    groupIndex,
-                                                    inputIndex,
-                                                    Number(e.target.value) || 0
-                                                )
-                                            }
-                                            onKeyDown={e =>
-                                                handleKeyDown(e, groupIndex, inputIndex)
-                                            }
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {groupIndex < meters.length - 1 && (
-                                <Separator orientation="vertical" />
-                            )}
+                            ))}
                         </div>
-                    ))}
+                        <Separator />
+                        <div className="w-full flex justify-end py-5">
+                            <Button type="submit" className="col-span-full w-56">Submit</Button>
+                        </div>
+                    </div>
+                </form>
+            </Form>
+
+        </div >
 
 
 
-                </div>
-            </div>
-        </div>
     )
 }
