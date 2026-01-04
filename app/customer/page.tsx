@@ -49,11 +49,10 @@ const formSchema = z.object({
             ),
         {
             message: "Select a Fabric and enter at least one meter",
-            path: ["groups"],
-        }
-    )
 
-    ,
+
+        }
+    ),
     grandTotalMeters: z.number().min(0),
     grandTotalThaans: z.number().min(0),
 });
@@ -143,7 +142,8 @@ export default function Page() {
 
     }, [])
 
-    const submitForm = form.handleSubmit(onSubmit,error => toast.warning(error.groups?.groups?.message));
+
+    const submitForm = form.handleSubmit(onSubmit, (error) => { toast.warning(error.groups?.root?.message) });
 
     useEffect(() => {
         const handleCtrlS = (e: KeyboardEvent) => {
@@ -194,7 +194,7 @@ export default function Page() {
         setValue("grandTotalThaans", grandThaans)
     }, [meters, setValue])
 
-    const formRef = useRef<HTMLFormElement>(null);   
+    const formRef = useRef<HTMLFormElement>(null);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key !== "Enter") return;
