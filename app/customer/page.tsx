@@ -13,6 +13,9 @@ import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { error, log } from "console"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { X } from "lucide-react"
+import FabricTable from "./FabricTable"
 
 type OptionType = {
     value: string
@@ -127,39 +130,32 @@ export default function Page() {
 
         console.log(finalPayload);
         // ✅ RESET FORM AND METERS
-    form.reset({
-        company: "",
-        vendor: "",
-        date: new Date().toISOString().split("T")[0],
-        groups: Array.from({ length: METER_GROUPS }, () => ({
-            groupNo: 1,
-            pattern: "",
-            rate: 0,
-            meters: Array(TOTAL_INPUTS).fill(0),
-            totalMeters: 0,
-            thaans: 0,
-        })),
-        grandTotalMeters: 0,
-        grandTotalThaans: 0,
-    });
+        form.reset({
+            company: "",
+            vendor: "",
+            date: new Date().toISOString().split("T")[0],
+            groups: Array.from({ length: METER_GROUPS }, () => ({
+                groupNo: 1,
+                pattern: "",
+                rate: 0,
+                meters: Array(TOTAL_INPUTS).fill(0),
+                totalMeters: 0,
+                thaans: 0,
+            })),
+            grandTotalMeters: 0,
+            grandTotalThaans: 0,
+        });
 
-    setMeters(
-        Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
-    );
+        setMeters(
+            Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
+        );
         alert("Data submitted! Check console.")
         // You can replace console.log with a POST request to your backend
     }
 
     const { setValue } = form
 
-    useLayoutEffect(() => {
-        document.body.style.overflowX = "hidden"
 
-        return () => {
-            document.body.style.overflowX = "auto"
-        }
-
-    }, [])
 
 
     const submitForm = form.handleSubmit(onSubmit, (error) => { toast.warning(error.groups?.root?.message) });
@@ -256,14 +252,51 @@ export default function Page() {
         }
     };
 
+    const [open, setOpen] = useState<boolean>(false);
 
+    useLayoutEffect(() => {
+        document.body.style.overflowX = "hidden"
+        if (open) {
+            document.body.style.overflowY = "hidden"
+            document.body.style.overflowX = "hidden"
+            const handleEsc = (event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                    setOpen(false)
+                }
+            }
 
+            window.addEventListener("keydown", handleEsc)
+        } else {
+            document.body.style.overflowY = "auto"
+        }
+        return () => {
+            document.body.style.overflowX = "auto"
+
+        }
+
+    }, [open])
+
+    useEffect(() => {
+        if (!open) return
+
+        const handleEsc = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                close()
+            }
+        }
+
+        window.addEventListener("keydown", handleEsc)
+
+        return () => {
+            window.removeEventListener("keydown", handleEsc)
+        }
+    }, [open])
     return (
-        <div className="w-full max-w-11/12 px-3  overflow-x-hidden relative mx-auto">
+        <div className="w-full max-w-11/12 px-3  overflow-x-hidden mx-auto">
             <Card className="mt-3">
                 <CardHeader className="flex justify-between items-center">
                     <Label>Customer Fabric Entry</Label>
-                    <Button type="button" >Fabric Entry List</Button>
+                    <Button type="button" onClick={() => setOpen(true)} className="cursor-pointer">Fabric Entry List</Button>
                 </CardHeader>
             </Card>
 
@@ -488,9 +521,19 @@ export default function Page() {
                 </form>
             </Form>
 
+            {open && <div onKeyDown={() => addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false))} className="absolute top-0 bottom-0 overflow-hidden max-h-screen left-0 right-0 p-5 bg-gray-500/30 z-50">
+                <div className="bg-white dark:bg-slate-800 w-full h-full rounded-md">
+                    <div className="flex items-center justify-between px-5 py-3 border-b">
+                        <h1>Fabric Customer Entry List</h1>
+                        <Button type="button" onClick={() => setOpen(false)} variant={"destructive"} className="rounded-full"><X /></Button>
+                    </div>
+                    <div className="overscroll-y-auto">
+<FabricTable/>
+                    </div>
+                </div>
+            </div>}
+
+
         </div >
-
-
-
     )
 }

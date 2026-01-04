@@ -24,20 +24,20 @@ export default function page() {
             <Card>
                 <CardHeader>
 
-            <div className="flex  justify-between py-3">
+                    <div className="flex  justify-between py-3">
 
-                <Label className="font-bold text-2xl">Company List</Label>
-                <Button onClick={() => setOpen(true)} className="capitalize"><Plus /> Create</Button>
-            </div>
+                        <Label className="font-bold text-2xl">Company List</Label>
+                        <Button onClick={() => setOpen(true)} className="capitalize"><Plus /> Create</Button>
+                    </div>
                 </CardHeader>
             </Card>
-            <Card  className="mt-3">
-<CardContent >
-            <CustomeDialog open={open} close={() => setOpen(false)} title="Company Details" children={<CompanyForm />} />
-<CompanyTable/>
-</CardContent>
+            <Card className="mt-3">
+                <CardContent >
+                    <CustomeDialog open={open} close={() => setOpen(false)} title="Company Details" children={<CompanyForm />} />
+                    <CompanyTable />
+                </CardContent>
             </Card>
-           
+
 
         </div>
     )
