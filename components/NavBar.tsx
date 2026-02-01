@@ -31,9 +31,7 @@ export default function NavBar() {
                     <Link href={'/city'}>
                     <DropdownMenuItem>City</DropdownMenuItem>
                     </Link>
-                    <Link href={'/area'}>
-                    <DropdownMenuItem>Area</DropdownMenuItem>
-                    </Link>
+                   
                     <Link href={'/unit'}>
                     <DropdownMenuItem>Unit</DropdownMenuItem>
                     </Link>
@@ -50,7 +48,9 @@ export default function NavBar() {
                     <Link href={"/customer"}>
                     <DropdownMenuItem>Customer</DropdownMenuItem>
                     </Link>
+                    <Link href={"/fabric"}>
                     <DropdownMenuItem>Tailor</DropdownMenuItem>
+                    </Link>
                 </DropdownMenuContent>
             </DropdownMenu>
 

@@ -24,8 +24,15 @@ import {
   CompanyFormValues,
 } from "./companyFormSchema";
 import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks";
+import { toast } from "sonner";
+import { createCompany, setCloseModel, updateCompany } from "../Redux/features/CompanySlice";
 
 export default function CompanyForm() {
+
+  const { currentCompany, loading } = useAppSelector((state) => state.company);
+  const dispatch = useAppDispatch();
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -36,24 +43,38 @@ export default function CompanyForm() {
   });
 
   useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "s"
-    ) {
-      e.preventDefault(); // stop browser save
-      form.handleSubmit(onSubmit)();
-      close();
-    }
-  };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "s"
+      ) {
+        e.preventDefault(); // stop browser save
+        form.handleSubmit(onSubmit)();
+        close();
+      }
+    };
 
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, [form]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [form]);
 
 
   function onSubmit(values: CompanyFormValues) {
-    console.log(values);
+    try {
+      if (currentCompany) {
+        dispatch(updateCompany({ ...values, _id: currentCompany._id })).unwrap();
+        toast.success("Company Updated Successfully");
+
+      } else {
+        dispatch(createCompany(values)).unwrap();
+        toast.success("Company Created Successfully");
+       }
+       dispatch(setCloseModel())
+       form.reset()
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+
   }
 
   return (
@@ -72,12 +93,12 @@ export default function CompanyForm() {
                 <FormLabel>Company Name *</FormLabel>
                 <FormControl>
                   <Input {...field} />
-                </FormControl>                
+                </FormControl>
               </FormItem>
             )}
           />
 
-            <FormField
+          <FormField
             control={form.control}
             name="ownerName"
             render={({ field }) => (
@@ -90,9 +111,9 @@ export default function CompanyForm() {
             )}
           />
 
-         
 
-        
+
+
 
           <FormField
             control={form.control}
@@ -144,12 +165,12 @@ export default function CompanyForm() {
                       <SelectItem value="option2">Option 2</SelectItem>
                     </SelectContent>
                   </Select>
-                  
+
                 </FormItem>
               )}
             />
           ))}
-             <FormField
+          <FormField
             control={form.control}
             name="pincode"
             render={({ field }) => (
@@ -169,7 +190,7 @@ export default function CompanyForm() {
           <InputField form={form} name="billingStreet1" label="Street 1 *" />
           <InputField form={form} name="billingStreet2" label="Street 2" />
           <InputField form={form} name="billingStreet3" label="Street 3" />
-          <InputField form={form} name="billingMobile" label="Mobile No *"  />
+          <InputField form={form} name="billingMobile" label="Mobile No *" />
           <InputField form={form} name="billingPhone" label="Phone No" />
           <InputField form={form} name="billingEmail" label="Email" />
         </div>
@@ -186,8 +207,10 @@ export default function CompanyForm() {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" variant="default">SAVE</Button>
-          <Button type="submit" variant="default">UPDATE</Button>
+          
+          <Button type="submit" variant="default">
+            {currentCompany ? "UPDATE" : "SAVE"}
+          </Button>
         </div>
       </form>
     </Form>
@@ -213,7 +236,7 @@ function InputField({
           <FormControl>
             <Input {...field} />
           </FormControl>
-          
+
         </FormItem>
       )}
     />

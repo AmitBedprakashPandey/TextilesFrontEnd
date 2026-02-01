@@ -31,12 +31,11 @@ export default function CustomDialog({ close, children, open, title }: props) {
 
     return <>
         {open &&
-            <div className="bg-black/30 absolute top-0 left-0 right-0 bottom-0 z-50 flex justify-center items-center">
+            <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs flex items-center justify-center">
 
-                <div className="min-w-48 min-h-48 p-3 max-h-fit max-w-fit bg-white dark:bg-gray-800 rounded-2xl">
+                <div className="min-w-96 min-h-48 p-3 max-h-fit max-w-max bg-white dark:bg-gray-800 rounded-2xl">
                     <div className="flex  items-center justify-between">
-
-                        <h1 className="font-bold text-2xl ml-5">{title}</h1>
+                        <h1 className="font-bold text-md ml-5">{title}</h1>
                         <Button type="button" variant={"destructive"} className="rounded-full" onClick={close}><X size={50} /></Button>
                     </div>
                     {children}

@@ -7,48 +7,61 @@ import { SerialNumberFormValues } from "./serialNumber.schema";
 import CustomDialog from "@/components/CustomDialog";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCcw } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { fetchSerialNumbers } from "../Redux/features/serialNumberSlice";
+import { fetchSerialNumbers, setOpenModel, setCloseModel, clearCurrentSerialNumber } from "../Redux/features/serialNumberSlice";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
+import { Spinner } from "@/components/ui/spinner";
+import CustomLoading from "@/components/CustomLoading";
 
 export default function SerialNumberPage() {
   const [serials, setSerials] = useState<any[]>([]);
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useAppDispatch();
-  const {serialNumber} = useAppSelector((state) => state.serialNumber);
+  const { openModel, loading } = useAppSelector((state) => state.serialNumber);
 
-  useEffect(() => {
+  const refresh = () => {
     dispatch(fetchSerialNumbers());
-  }, [dispatch]);
+  };
+  
+    useEffect(() => {
+        refresh();
+    }, [dispatch]);
 
   return (
-    <div className="p-5 max-h-full overflow-y-auto">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between px-5 py-3">
-            <Label className="font-bold text-2xl">Serial Number</Label>
-            <Button onClick={() => setOpen(true)} className="capitalize">
-              <Plus /> Create
-            </Button>
-          </div>
+    <div className="p-3 max-h-full overflow-y-auto">
+
+      <Card >
+        <CardHeader className="flex justify-between items-center px-5">
+
+        <Label className="font-bold">Serial Number</Label>
+        <div className="flex gap-3">
+          <Button onClick={() => { dispatch(setOpenModel(true)); dispatch(clearCurrentSerialNumber()) }} className="capitalize">
+            <Plus /> Create
+          </Button>
+          <Button onClick={refresh} className="capitalize" disabled={loading}>
+            <RefreshCcw />
+          </Button>
+        </div>
         </CardHeader>
       </Card>
-      <Card className="mt-3">
-        <CardContent>
-          <CustomDialog
-            open={open}
-            close={() => setOpen(false)}
-            title="Serial Number Details"
-            children={
-              <SerialNumberForm />
-            }
-          />
 
-          <SerialNumberList data={serialNumber} />
+      <Card className="mt-0">
+        <CardContent>
+          <SerialNumberList />
         </CardContent>
       </Card>
+
+      {openModel &&
+        <CustomDialog
+          close={() => dispatch(setCloseModel())}
+          open={openModel}
+          title={`Serial Number Details`}
+          children={<SerialNumberForm />}
+        />
+      }
+      {loading && <CustomLoading /> }
     </div>
   );
 }

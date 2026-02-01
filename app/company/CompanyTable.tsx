@@ -1,8 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Table,TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import {  Edit, Trash } from "lucide-react";
+import { use } from "react";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks";
+import { setOpenModel } from "../Redux/features/CompanySlice";
 
 export default function CompanyTable() {
+    const {company} = useAppSelector((state) => state.company);
+    const dispatch = useAppDispatch();
+
     return(<>
      <Table>
                 <TableHeader>
@@ -19,6 +25,7 @@ export default function CompanyTable() {
                 </TableHeader>
                 <TableBody>
                     <TableRow>
+
                         <TableCell className="font-medium">1</TableCell>
                         <TableCell>Paid</TableCell>
                         <TableCell>Credit Card</TableCell>
@@ -28,7 +35,7 @@ export default function CompanyTable() {
                         <TableCell>Paid</TableCell>
                         <TableCell className="">
                             <div className="flex gap-3">
-                                <Button type="button" ><Edit /></Button>
+                                <Button type="button" onClick={()=>dispatch(setOpenModel(true))} ><Edit /></Button>
                                 <Button type="button" variant={"destructive"}><Trash /></Button>
                             </div>
                         </TableCell>
