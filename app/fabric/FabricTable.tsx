@@ -2,7 +2,6 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, IndianRupee, PackagePlus, Trash, X } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -21,12 +20,14 @@ import {
 import { useState } from "react";
 import FabriRecivedForm from "./FabricForm";
 import PaymentForm from "./PaymentForm";
-import { Textarea } from "@/components/ui/textarea";
-import { useAppSelector } from "../Redux/hooks";
+import { useAppSelector,useAppDispatch } from "../Redux/hooks";
+import CustomDialog from "@/components/CustomDialog";
+import { setOpenFabric,setOpenPayment } from "@/app/Redux/features/TailorFabricSlice";
+
 
 export default function FabricTable() {
-    const [open, setOpen] = useState<boolean>(false);
-    const { fabricStatus } = useAppSelector((state) => state.TailorFabric)
+const dispatch = useAppDispatch()
+    const { fabricStatus,openFabric,openPayment } = useAppSelector((state) => state.TailorFabric)
 
     return (<>
         <div className=" p-2 border-b">
@@ -71,6 +72,7 @@ export default function FabricTable() {
                         <TableCell className="flex justify-center items-center gap-2">
                             <Button type="button" ><Edit /></Button>
                             <Button type="button" onClick={() => setOpen(true)}><PackagePlus /></Button>
+                            <Button type="button" onClick={() => setOpenPayment(true)} variant="outline"><IndianRupee /></Button>
                             <AlertDialog>
                                 <AlertDialogTrigger> <Button type="button" variant="destructive" className="rounded-full"><Trash /></Button></AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -95,9 +97,9 @@ export default function FabricTable() {
 
 
         {/* Recived Fabric & Payment */}
-        {open && <div onKeyDown={() => addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false))} className="absolute top-0 bottom-0 overflow-hidden max-h-screen left-0 right-0 p-5 bg-gray-500/30 z-50">
+        {false && <div onKeyDown={() => addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false))} className="absolute top-0 bottom-0 overflow-hidden max-h-screen left-0 right-0 p-5 bg-gray-500/30 z-50">
             <div className="bg-white dark:bg-slate-800 w-full h-full relative" >
-                <div className="flex scale-95 items-center justify-between px-5 py-3 border-b">
+                {/* <div className="flex scale-95 items-center justify-between px-5 py-3 border-b">
                     <h1>Recived Fabric & Payment Entry</h1>
                     <Button type="button" onClick={() => setOpen(false)} variant={"destructive"} className="rounded-full"><X /></Button>
                 </div>
@@ -140,9 +142,9 @@ export default function FabricTable() {
                         </Card>
 
                     </div>
-                </div>
+                </div> */}
                 {/* narration */}
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-900 flex justify-between items-center gap-3 px-5">
+                {/* <div className="absolute bottom-0 left-0 right-0 bg-slate-900 flex justify-between items-center gap-3 px-5">
                     <div className="w-2xl p-2">
                         <Label>Narration</Label>
                         <Textarea name="narr" rows={4} maxLength={400} className="max-h-lg mt-3 resize-y" placeholder="Enter Narration" />
@@ -167,9 +169,15 @@ export default function FabricTable() {
                         </div>
                         <Button type="button" className="mt-6" >Save</Button>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>}
+
+        <CustomDialog   open={openPayment} close={() => setOpenPayment(false)} title="Payment Entry"> <PaymentForm /> </CustomDialog>
+
+<CustomDialog   open={open} close={() => setOpen(false)} title="Fabric Received Entry"> <FabriRecivedForm /> </CustomDialog>
+
+
     </>
     )
 }

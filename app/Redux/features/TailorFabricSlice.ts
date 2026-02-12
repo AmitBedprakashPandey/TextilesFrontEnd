@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { set } from 'zod'
 
 interface items {
     itemName: string
@@ -32,6 +33,7 @@ interface initProps {
     loading: boolean,
     error: string | null
     message: string | null
+openPayment: boolean,openFabric: boolean
 }
 
 const TailorFabricState: TailorFabricState = {
@@ -48,7 +50,9 @@ const initialState: initProps = {
     fabricStatus: TailorFabricState,
     loading: false,
     error: null,
-    message: null
+    message: null,
+    openPayment: false,
+    openFabric: false
 }
 
 export const TailorFabricSlice = createSlice({
@@ -100,6 +104,10 @@ export const TailorFabricSlice = createSlice({
         addGrandAmt: (state, action: PayloadAction<number>) => {
             state.fabricStatus.grandAmount += action.payload;
         },
+        setOpenPayment: (state, action: PayloadAction<boolean>) => {state.openPayment = action.payload; },
+        setOpenFabric: (state, action: PayloadAction<boolean>) => {state.openFabric = action.payload; },
+
+
     },
     extraReducers: (builder) => {
         builder
@@ -107,5 +115,5 @@ export const TailorFabricSlice = createSlice({
 })
 
 
-export const { addGrandTotal, addDiffMeters, addPendingAmount, addNarration, addGrandAmt, deleteFabric, deletePayment, updateFabric, updatePayment, addFabric, addPayment, clearFabric, clearPayment } = TailorFabricSlice.actions
+export const { addGrandTotal, addDiffMeters, addPendingAmount, addNarration, addGrandAmt, deleteFabric, deletePayment, updateFabric, updatePayment, addFabric, addPayment, clearFabric, clearPayment, setOpenPayment, setOpenFabric } = TailorFabricSlice.actions
 export default TailorFabricSlice.reducer
