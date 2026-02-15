@@ -53,7 +53,7 @@ export default function NavBar() {
             <div className="">
                 <Link href={'/'} className="block w-full text-left px-3 py-2 font-bold hover:bg-red-600 hover:underline gap-2">Home</Link>
             </div>
-            <Accordion type="single" defaultValue={"item-1"} className="max-w-lg">
+            <Accordion type="single" defaultValue={"item-2"} className="max-w-lg">
                 {items.map((item) => (
                     <AccordionItem key={item.value} value={item.value}>
                         <AccordionTrigger className="uppercase cursor-pointer px-3 py-2 font-bold hover:bg-red-600">{item.trigger}</AccordionTrigger>
