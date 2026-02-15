@@ -24,17 +24,15 @@ export default function SerialNumberPage() {
   const refresh = () => {
     dispatch(fetchSerialNumbers());
   };
-  
-    useEffect(() => {
-        refresh();
-    }, [dispatch]);
+
+  useEffect(() => {
+    refresh();
+  }, [dispatch]);
 
   return (
-    <div className="p-3 max-h-full overflow-y-auto">
+    <div className="w-full h-full relative overflow-hidden">
 
-      <Card >
-        <CardHeader className="flex justify-between items-center px-5">
-
+      <div className="w-full flex items-center justify-between mb-5">
         <Label className="font-bold">Serial Number</Label>
         <div className="flex gap-3">
           <Button onClick={() => { dispatch(setOpenModel(true)); dispatch(clearCurrentSerialNumber()) }} className="capitalize">
@@ -44,24 +42,18 @@ export default function SerialNumberPage() {
             <RefreshCcw />
           </Button>
         </div>
-        </CardHeader>
-      </Card>
+      </div>
 
-      <Card className="mt-0">
-        <CardContent>
-          <SerialNumberList />
-        </CardContent>
-      </Card>
+      <SerialNumberList />
 
-      {openModel &&
-        <CustomDialog
-          close={() => dispatch(setCloseModel())}
-          open={openModel}
-          title={`Serial Number Details`}
-          children={<SerialNumberForm />}
-        />
-      }
-      {loading && <CustomLoading /> }
+      <CustomDialog
+        close={() => dispatch(setCloseModel())}
+        open={openModel}
+        title={`Serial Number Details`}
+        children={<SerialNumberForm />}
+      />
+
+      {loading && <CustomLoading />}
     </div>
   );
 }

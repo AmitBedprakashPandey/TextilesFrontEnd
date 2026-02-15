@@ -9,9 +9,9 @@ export default function CompanyTable() {
     const {company} = useAppSelector((state) => state.company);
     const dispatch = useAppDispatch();
 
-    return(<>
-     <Table>
-                <TableHeader>
+    return(<div className="w-full h-[90dvh] relative overflow-auto">
+     <Table className="">
+                <TableHeader className="">
                     <TableRow>
                         <TableHead className="w-10">#</TableHead>
                         <TableHead>Company Name</TableHead>
@@ -44,5 +44,5 @@ export default function CompanyTable() {
                 </TableBody>
             </Table>
     
-    </>)
+    </div>)
 }

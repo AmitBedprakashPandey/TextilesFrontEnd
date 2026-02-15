@@ -1,21 +1,20 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react"
+import { useState, useRef, useEffect, useLayoutEffect } from "react"
 import { Input } from "@/components/ui/input"
 import Select from 'react-select'
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { error, log } from "console"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import FabricTable from "./FabricTable"
+import CustomDialog from "@/components/CustomDialog"
 
 type OptionType = {
     value: string
@@ -61,7 +60,7 @@ const formSchema = z.object({
 });
 
 export default function Page() {
-
+    const [open, setOpen] = useState<boolean>(false);
     const [meters, setMeters] = useState<number[][]>(
         Array.from({ length: METER_GROUPS }, () =>
             Array(TOTAL_INPUTS).fill(0)
@@ -155,25 +154,20 @@ export default function Page() {
 
     const { setValue } = form
 
-
-
-
     const submitForm = form.handleSubmit(onSubmit, (error) => { toast.warning(error.groups?.root?.message) });
 
     useEffect(() => {
         const handleCtrlS = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === "s") { // Ctrl+S (or Cmd+S on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLocaleLowerCase() === "s") { // Ctrl+S (or Cmd+S on Mac)
                 e.preventDefault() // prevent browser save
-
-
+                if (open) return
                 submitForm()
-
             }
         }
 
         window.addEventListener("keydown", handleCtrlS)
         return () => window.removeEventListener("keydown", handleCtrlS)
-    }, []);
+    }, [open, submitForm]);
 
     // calculate total meters/ thans
     useEffect(() => {
@@ -220,14 +214,7 @@ export default function Page() {
         if (!form) return;
 
         const focusable = Array.from(
-            form.querySelectorAll<HTMLElement>(
-                `
-      input:not([disabled]),
-      textarea:not([disabled]),
-      button:not([disabled]),
-      [tabindex]:not([tabindex="-1"])
-      `
-            )
+            form.querySelectorAll<HTMLElement>(`input:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])`)
         ).filter(el => el.offsetParent !== null);
 
         // 🔥 detect react-select inner input
@@ -252,53 +239,12 @@ export default function Page() {
         }
     };
 
-    const [open, setOpen] = useState<boolean>(false);
-
-    useLayoutEffect(() => {
-        document.body.style.overflowX = "hidden"
-        if (open) {
-            document.body.style.overflowY = "hidden"
-            document.body.style.overflowX = "hidden"
-            const handleEsc = (event: KeyboardEvent) => {
-                if (event.key === "Escape") {
-                    setOpen(false)
-                }
-            }
-
-            window.addEventListener("keydown", handleEsc)
-        } else {
-            document.body.style.overflowY = "auto"
-        }
-        return () => {
-            document.body.style.overflowX = "auto"
-
-        }
-
-    }, [open])
-
-    useEffect(() => {
-        if (!open) return
-
-        const handleEsc = (event: KeyboardEvent) => {
-            if (event.key === "Escape") {
-                close()
-            }
-        }
-
-        window.addEventListener("keydown", handleEsc)
-
-        return () => {
-            window.removeEventListener("keydown", handleEsc)
-        }
-    }, [open])
     return (
-        <div className="w-full max-w-11/12 px-3  overflow-x-hidden mx-auto">
-            <Card className="mt-3">
-                <CardHeader className="flex justify-between items-center">
-                    <Label>Customer Fabric Entry</Label>
-                    <Button type="button" onClick={() => setOpen(true)} className="cursor-pointer">Fabric Entry List</Button>
-                </CardHeader>
-            </Card>
+        <div className="w-full h-full relative">
+            <div className="flex justify-between items-center">
+                <Label>Tailor Fabric Entry</Label>
+                <Button type="button" onClick={() => setOpen(true)} className="cursor-pointer">Fabric Entry List</Button>
+            </div>
 
             <Form  {...form}>
                 <form onKeyDown={handleKeyDown} ref={formRef} onSubmit={submitForm}>
@@ -347,7 +293,7 @@ export default function Page() {
                                             <FormControl>
                                                 <Select<OptionType>
                                                     tabIndex={0}
-                                                    classNamePrefix={"react-select"}
+                                                    classNamePrefix={"react-selectss"}
                                                     value={options.find(o => o.value === field.value) ?? null}
                                                     onChange={(val) => field.onChange(val?.value)}
                                                     options={options}
@@ -520,20 +466,10 @@ export default function Page() {
                     </div>
                 </form>
             </Form>
-
-            {open && <div onKeyDown={() => addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false))} className="absolute top-0 bottom-0 overflow-hidden max-h-screen left-0 right-0 p-5 bg-gray-500/30 z-50">
-                <div className="bg-white dark:bg-slate-800 w-full h-full rounded-md">
-                    <div className="flex items-center justify-between px-5 py-3 border-b">
-                        <h1>Fabric Customer Entry List</h1>
-                        <Button type="button" onClick={() => setOpen(false)} variant={"destructive"} className="rounded-full"><X /></Button>
-                    </div>
-                    <div className="overscroll-y-auto">
-<FabricTable/>
-                    </div>
-                </div>
-            </div>}
+                <CustomDialog open={open} close={() => setOpen(false)} title="Fabric Customer Entry List" children={<FabricTable />} />
 
 
+            
         </div >
     )
 }

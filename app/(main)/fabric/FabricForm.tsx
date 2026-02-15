@@ -141,10 +141,10 @@ export default function FabriRecivedForm() {
 
 
     return (
-        <>
+        <div className="w-full h-[90dvh] relative">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="grid grid-cols-5 gap-3 ">
+                    <div className="flex grow gap-2 items-center ">
 
                         <FormField
                             control={form.control}
@@ -287,6 +287,6 @@ export default function FabriRecivedForm() {
                     </div>
                 </form>
             </Form>
-        </>
+        </div>
     )
 }

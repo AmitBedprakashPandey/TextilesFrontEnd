@@ -23,8 +23,8 @@ import { VendorFormValues, vendorUpdateSchema } from "./vendorSchema";
 import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
-import { updateVendor, createVendor, setCloseModel, clearCurrentVendor } from "@/app/Redux/features/VendorSlice";
-import { fetchvendorCatagory } from "@/app/Redux/features/vendorCatagorySlice";
+import { updateVendor, createVendor, setCloseModel, clearCurrentVendor } from "@/app/(main)/Redux/features/VendorSlice";
+import { fetchvendorCatagory } from "@/app/(main)/Redux/features/vendorCatagorySlice";
 import { toast } from "sonner";
 import { RefreshCcw } from "lucide-react";
 

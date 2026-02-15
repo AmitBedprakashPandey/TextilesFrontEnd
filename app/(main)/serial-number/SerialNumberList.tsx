@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner";
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 export default function SerialNumberList() {
 
   const [deleteModel, setDeleteModel] = useState<{
@@ -48,35 +49,35 @@ export default function SerialNumberList() {
 
 
   return (
-    <div className="relative h-[600px] overflow-auto">
+    <div className="w-full h-[90dvh] relative overflow-auto">
 
 
-      <table className="min-w-[400px] w-full text-sm border-collapse">
-        <thead className="sticky top-0 z-20 bg-background">
-          <tr>
-            <th className="p-2 text-left">#</th>
-            <th className="p-2 text-left">Prefix</th>
-            <th className="p-2 text-left">Start</th>
-            <th className="p-2 text-left">Current</th>
-            <th className="p-2 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="">
+        <TableHeader className="">
+          <TableRow>
+            <TableHead className="p-2 text-left">#</TableHead>
+            <TableHead className="p-2 text-left">Prefix</TableHead>
+            <TableHead className="p-2 text-left">Start</TableHead>
+            <TableHead className="p-2 text-left">Current</TableHead>
+            <TableHead className="p-2 text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {serialNumber.length === 0 && (
-            <tr>
-              <td colSpan={5} className="p-4 text-center text-muted-foreground">
+            <TableRow>
+              <TableCell colSpan={5} className="p-4 text-center text-muted-foreground">
                 No serial numbers found
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           )}
 
           {serialNumber.map((item, i) => (
-            <tr key={item._id} className="border-t">
-              <td className="px-2">{i + 1}</td>
-              <td className="p-2">{item.prefix}</td>
-              <td className="p-2">{item.startNumber}</td>
-              <td className="p-2">{item.currentNumber}</td>
-              <td className="p-2 flex justify-end gap-2">
+            <TableRow key={item._id} className="border-t">
+              <TableCell className="px-2">{i + 1}</TableCell>
+              <TableCell className="p-2">{item.prefix}</TableCell>
+              <TableCell className="p-2">{item.startNumber}</TableCell>
+              <TableCell className="p-2">{item.currentNumber}</TableCell>
+              <TableCell className="p-2 flex justify-end gap-2">
                 <Button size="sm" variant="default" type="button" onClick={() => onEdit(item)}>
                   <Edit />
                 </Button>
@@ -84,11 +85,11 @@ export default function SerialNumberList() {
                   <Trash />
                 </Button>
 
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       <AlertDialog open={deleteModel?.open}>
         <AlertDialogContent>

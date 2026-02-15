@@ -1,6 +1,6 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Printer, Receipt, Trash } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,14 @@ import {
 
 export default function FabricTable() {
     return (<>
-        <div className=" p-2 border-b">
+        <div className="w-[70vw] p-2 border-b">
             <div className="px-3 flex items-center gap-10">
                 <div>
                     <Label>Bill No.</Label>
                     <Input type="text" placeholder="enter number" className="max-w-28 mt-1" />
                 </div>
                 <div>
-                    <Label>Search Name</Label>
+                    <Label>Search Vendor Name</Label>
                     <Input type="text" placeholder="enter name" className="max-w-56 mt-1" />
                 </div>
                 <div>
@@ -34,9 +34,8 @@ export default function FabricTable() {
                     <Input type="date" placeholder="select date" className="max-w-56 mt-1" />
                 </div>
             </div>
-
         </div>
-        <div>
+        <div className="w-full h-[80dvh] relative overflow-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -59,8 +58,10 @@ export default function FabricTable() {
                         <TableCell>23/07/2025</TableCell>
                         <TableCell>1262.20</TableCell>
                         <TableCell>60</TableCell>
-                        <TableCell className="flex justify-center items-center gap-5">
+                        <TableCell className="flex justify-center items-center gap-2">
                             <Button type="button" ><Edit /></Button>
+                            <Button type="button" ><Printer/></Button>
+                            <Button type="button" ><Receipt /></Button>
                             <AlertDialog>
                                 <AlertDialogTrigger><Trash /></AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -77,17 +78,10 @@ export default function FabricTable() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-
                         </TableCell>
-
                     </TableRow>
                 </TableBody>
             </Table>
-
-
-
-
-
         </div>
     </>
     )

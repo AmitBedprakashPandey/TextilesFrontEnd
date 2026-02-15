@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { fetchCity,SetCurrentCity,clearCurrentCity,setOpenModel,setCloseModel } from "../Redux/features/CitySlice";
@@ -15,8 +15,9 @@ export function CityList() {
 
 
   return (
-    <Table className="">
-      <TableHeader className="">
+    <div className="w-full h-[90dvh] relative overflow-auto">
+    <Table >
+      <TableHeader>
         <TableRow>
           <TableHead className="p-2">#</TableHead>
           <TableHead className="p-2 text-left">City</TableHead>
@@ -25,20 +26,16 @@ export function CityList() {
       </TableHeader>
       <TableBody>
         {cityList.map((c, i) => (
-          <tr key={c._id} className="border-t">
-            <td className="p-2">{i + 1}</td>
-            <td className="p-2">{c.cityName}</td>
-            <td className="p-2 text-right">
-              <Button size="sm" variant="outline"
-              onClick={()=>{
-                dispatch(SetCurrentCity(c));
-                dispatch(setOpenModel(true))
-              }}
-              >Edit</Button>
-            </td>
-          </tr>
+          <TableRow key={c._id} className="border-t">
+            <TableCell className="">{i + 1}</TableCell>
+            <TableCell className="capitalize">{c.cityName}</TableCell>
+            <TableCell className="text-right">
+              <Button variant="outline" onClick={()=>{dispatch(SetCurrentCity(c)); dispatch(setOpenModel(true))}}>Edit</Button>
+            </TableCell>
+          </TableRow>
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }

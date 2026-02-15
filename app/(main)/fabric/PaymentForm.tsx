@@ -119,7 +119,7 @@ export default function PaymentForm() {
       disptach(deletePayment(index))
     }
 
-    return <>
+    return <div className="w-[100dvh]">
 
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -288,6 +288,6 @@ export default function PaymentForm() {
             </DialogContent>
         </Dialog>
 
-    </>
+    </div>
 
 }

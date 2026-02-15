@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { Edit, Trash } from "lucide-react";
 import CustomLoading from "@/components/CustomLoading";
-import { SetCurrentUnit, deleteUnit, fetchUnit, setOpenModel, type unitUpdateState } from "@/app/Redux/features/unitsSlices";
+import { SetCurrentUnit, deleteUnit, fetchUnit, setOpenModel, type unitUpdateState } from "@/app/(main)/Redux/features/unitsSlices";
 import { useEffect, useState } from "react";
 import { on } from "events";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function UnitList() {
   const [deleteModel, setDeleteModel] = useState<{ open: boolean; _id: string | null; }>({ open: false, _id: null, });
@@ -45,27 +46,27 @@ export default function UnitList() {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="">
-          <tr>
-            <th className="p-2 text-left">#</th>
+    <div className="w-full h-[80dvh] relative overflow-auto">
+      <Table className="w-full text-sm">
+        <TableHeader className="">
+          <TableRow>
+            <TableHead className="p-2 text-left">#</TableHead>
             <th className="p-2 text-left">Unit Name</th>
             <th className="p-2 text-left">Short</th>
             <th className="p-2 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {unit.length === 0 && (
-            <tr>
+            <TableRow>
               <td colSpan={4} className="p-4 text-center text-muted-foreground">
                 No units found
               </td>
-            </tr>
+            </TableRow>
           )}
 
           {unit.map((unit, i) => (
-            <tr key={unit._id} className="border-t">
+            <TableRow key={unit._id} className="border-t">
               <td className="p-2">{i + 1}</td>
               <td className="p-2">{unit.unitName}</td>
               <td className="p-2">{unit.unitShort}</td>
@@ -77,10 +78,10 @@ export default function UnitList() {
                   <Trash />
                 </Button>
               </td>
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       <AlertDialog open={deleteModel?.open}>
         <AlertDialogContent>
           <AlertDialogHeader>
