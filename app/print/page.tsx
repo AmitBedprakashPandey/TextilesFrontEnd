@@ -3,7 +3,7 @@
 import { useReactToPrint } from "react-to-print";
 import React,{use, useEffect, useRef} from "react";
 import { Button } from "@/components/ui/button";
-
+import { useSearchParams } from "next/navigation";
 
 const BillPage: React.FC = () => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -14,6 +14,10 @@ const BillPage: React.FC = () => {
   }, [reactToPrintFn]);
 
 
+
+  const searchParams = useSearchParams();
+  const name = searchParams.get("name");
+  const amount = searchParams.get("amount");
 
   return (
     <div ref={contentRef} className="bg-gray-200 h-screen flex justify-center text-black text-[13px]">
@@ -33,10 +37,10 @@ const BillPage: React.FC = () => {
           <tbody>
             <tr>
               <td className="border border-black p-2 font-semibold">
-                Bill No : 3250
+                Bill No : {amount}
               </td>
               <td className="border border-black p-2 font-semibold text-right">
-                Bill Date : 06-12-2025
+                Bill Date : {name } 06-12-2025
               </td>
             </tr>
             <tr>

@@ -19,7 +19,7 @@ interface Payment {
     paidby: string
 }
 
-interface TailorFabricState {
+interface CustomerFabricState {
     fabric: items[],
     payment: Payment[],
     grandMeters: number,
@@ -29,15 +29,15 @@ interface TailorFabricState {
     narration: string,
 }
 interface initProps {
-    fabricStatus: TailorFabricState,
+    fabricStatus: CustomerFabricState,
     loading: boolean,
     error: string | null
     message: string | null
-    openPayment: boolean,openFabric: boolean
-    localStorage: TailorFabricState | null
+    openPayment: boolean, openFabric: boolean
+    localStorage: CustomerFabricState | null
 }
 
-const TailorFabricState: TailorFabricState = {
+const CustomerFabricState: CustomerFabricState = {
     fabric: [],
     payment: [],
     grandMeters: 0,
@@ -48,7 +48,7 @@ const TailorFabricState: TailorFabricState = {
 }
 
 const initialState: initProps = {
-    fabricStatus: TailorFabricState,
+    fabricStatus: CustomerFabricState,
     loading: false,
     error: null,
     message: null,
@@ -59,8 +59,8 @@ const initialState: initProps = {
 
 
 
-export const TailorFabricSlice = createSlice({
-    name: 'TailorFabric',
+export const CustomerFabricSlice = createSlice({
+    name: 'CustomerFabric',
     initialState,
 
     reducers: {
@@ -100,7 +100,7 @@ export const TailorFabricSlice = createSlice({
             state.fabricStatus.diffMeters = action.payload;
         },
         addPendingAmount: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.pendingAmount = (state.fabricStatus.grandAmount-action.payload);
+            state.fabricStatus.pendingAmount = (state.fabricStatus.grandAmount - action.payload);
         },
         addNarration: (state, action: PayloadAction<string>) => {
             state.fabricStatus.narration = action.payload;
@@ -108,10 +108,10 @@ export const TailorFabricSlice = createSlice({
         addGrandAmt: (state, action: PayloadAction<number>) => {
             state.fabricStatus.grandAmount += action.payload;
         },
-        setOpenPayment: (state, action: PayloadAction<boolean>) => {state.openPayment = action.payload; },
-        setOpenFabric: (state, action: PayloadAction<boolean>) => {state.openFabric = action.payload; },
-        
-        setLocalStorage: (state, action: PayloadAction<TailorFabricState>) => {
+        setOpenPayment: (state, action: PayloadAction<boolean>) => { state.openPayment = action.payload; },
+        setOpenFabric: (state, action: PayloadAction<boolean>) => { state.openFabric = action.payload; },
+
+        setLocalStorage: (state, action: PayloadAction<CustomerFabricState>) => {
             state.localStorage = action.payload;
         },
         clearLocalStorage: (state) => {
@@ -125,5 +125,5 @@ export const TailorFabricSlice = createSlice({
 })
 
 
-export const { addGrandTotal, addDiffMeters,clearLocalStorage,setLocalStorage, addPendingAmount, addNarration, addGrandAmt, deleteFabric, deletePayment, updateFabric, updatePayment, addFabric, addPayment, clearFabric, clearPayment, setOpenPayment, setOpenFabric } = TailorFabricSlice.actions
-export default TailorFabricSlice.reducer
+export const { addGrandTotal, addDiffMeters, setLocalStorage, clearLocalStorage,addPendingAmount, addNarration, addGrandAmt, deleteFabric, deletePayment, updateFabric, updatePayment, addFabric, addPayment, clearFabric, clearPayment, setOpenPayment, setOpenFabric } = CustomerFabricSlice.actions
+export default CustomerFabricSlice.reducer

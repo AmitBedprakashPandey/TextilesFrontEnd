@@ -23,11 +23,16 @@ import PaymentForm from "./PaymentForm";
 import { useAppSelector,useAppDispatch } from "../Redux/hooks";
 import CustomDialog from "@/components/CustomDialog";
 import { setOpenFabric,setOpenPayment } from "@/app/(main)/Redux/features/TailorFabricSlice";
-
+import { useNewtabOpener } from "@/components/ReuseFunction";
 
 export default function FabricTable() {
 const dispatch = useAppDispatch()
     const { fabricStatus,openFabric,openPayment } = useAppSelector((state) => state.TailorFabric)
+
+    const printPaper = () => {
+        useNewtabOpener("print");
+    }
+
 
     return (<div className="w-full relative">
         <div className=" p-2 border-b">
@@ -73,7 +78,7 @@ const dispatch = useAppDispatch()
                             <Button type="button" ><Edit /></Button>
                             <Button type="button" onClick={() => dispatch(setOpenFabric(true))}><PackagePlus /></Button>
                             <Button type="button" onClick={() => dispatch(setOpenPayment(true))}><IndianRupee /></Button>
-                            <Button type="button" ><Printer /></Button>
+                            <Button type="button" onClick={printPaper} ><Printer /></Button>
                             <Button type="button" ><Receipt /></Button>
                             <AlertDialog>
                                 <AlertDialogTrigger> <Button type="button" variant="destructive" className="rounded-full"><Trash /></Button></AlertDialogTrigger>

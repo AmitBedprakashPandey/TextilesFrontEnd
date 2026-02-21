@@ -114,7 +114,7 @@ export default function FabriRecivedForm() {
             rate: item.rate,
             date: item.date,
         })
-
+        
         setEditIndex(index)
     }
 
@@ -155,7 +155,7 @@ export default function FabriRecivedForm() {
                                         Date
                                     </FormLabel>
                                     <FormControl ref={dateRef}>
-                                        <Input type="date" {...field} onFocus={(e) => e.target.select} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), itemRef.current?.focus())} />
+                                        <Input type="date" {...field} onFocus={(e) => e.target.select} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), itemRef.current?.focus(), itemRef.current?.select())} />
                                     </FormControl>
                                 </FormItem>
                             )} />
@@ -171,7 +171,7 @@ export default function FabriRecivedForm() {
                                         <Input
                                             autoFocus
                                             {...field} onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), pcsRef.current?.focus())}
+                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), pcsRef.current?.focus(), pcsRef.current?.select())}
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -191,7 +191,7 @@ export default function FabriRecivedForm() {
                                                 field.onChange(value);
                                             }}
                                             onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), avgRef.current?.focus())}
+                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), avgRef.current?.focus(), avgRef.current?.select())}
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -211,7 +211,7 @@ export default function FabriRecivedForm() {
                                                 field.onChange(value);
                                             }}
                                             onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), rateRef.current?.focus())}
+                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), rateRef.current?.focus(), rateRef.current?.select())}
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -248,6 +248,7 @@ export default function FabriRecivedForm() {
                         </div>
 
                         <Button type="submit" ref={subBtnRef}
+                        onKeyDown={(e)=>e.key === "Enter" && (itemRef.current?.focus(), itemRef.current?.select())}
                             className="focus:bg-green-500  focus:text-white col-span-full mt-5">{editIndex !== null ? "Edit" : "Add"}</Button>
                     </div>
 
@@ -277,7 +278,7 @@ export default function FabriRecivedForm() {
                                         <TableCell>{row.rate}</TableCell>
                                         <TableCell>{row.totalAmt}</TableCell>
                                         <TableCell>
-                                            <Button size="sm" variant="outline" type="button" onClick={() => onEdit(i)}><Edit /></Button>
+                                            <Button size="sm" variant="outline" type="button"  onClick={() => {onEdit(i),itemRef.current?.select(),itemRef.current?.focus()}}><Edit /></Button>
                                             <Button size="sm" variant="outline" type="button" onClick={() => onDelete(i)}><Trash /></Button>
                                         </TableCell>
                                     </TableRow>
@@ -288,5 +289,8 @@ export default function FabriRecivedForm() {
                 </form>
             </Form>
         </div>
+
+
+
     )
 }

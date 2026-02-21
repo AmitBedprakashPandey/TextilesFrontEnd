@@ -13,17 +13,20 @@ import { Edit, Trash } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { addFabric, addGrandAmt, addPayment, addPendingAmount, deleteFabric, deletePayment, updateFabric, updatePayment } from "../Redux/features/TailorFabricSlice";
-
+import { useDirectFocus, useEnterNavigation } from "@/components/ReuseFunction";
+import { log } from "console";
 interface OptionType {
     value: string
+    label: string
 }
 
+
 const options: OptionType[] = [
-    { value: "CASH" },
-    { value: "UPI" },
-    { value: "CHEQUE" },
-    { value: "BANK TRANSFER" },
-    { value: "CREDIT CARD" },
+    { value: "CASH" , label: "CASH"},
+    { value: "UPI" , label: "UPI"},
+    { value: "CHEQUE" , label: "CHEQUE"},
+    { value: "BANK TRANSFER" , label: "BANK TRANSFER"},
+    { value: "CREDIT CARD" , label: "CREDIT CARD"},
 ]
 
 const formSchema = z.object({
@@ -35,12 +38,7 @@ const formSchema = z.object({
 })
 
 export default function PaymentForm() {
-    const dateRef = useRef<HTMLInputElement>(null)
-    const paymentRef = useRef<SelectInstance<OptionType>>(null)
-    const amtRef = useRef<HTMLInputElement>(null)
-    const reciptRef = useRef<HTMLInputElement>(null)
-    const paidbyRef = useRef<HTMLInputElement>(null)
-    const submitRef = useRef<HTMLButtonElement>(null)
+    
     const [previewImg, setPreviewImg] = useState<string | null>(null)
 
     const disptach = useAppDispatch();
@@ -90,7 +88,6 @@ export default function PaymentForm() {
             paidby: "",
         })
 
-        paymentRef.current?.focus()
     }
 
     const fileToBase64 = (file: File): Promise<string> => {
@@ -119,11 +116,21 @@ export default function PaymentForm() {
       disptach(deletePayment(index))
     }
 
-    return <div className="w-[100dvh]">
+    const formRef = useRef<HTMLFormElement>(null);
+    
+    const {handleKeyDown} = useEnterNavigation({formRef})
+       
+useEffect(() => {
+console.log("formRef", formRef.current?.getElementsByTagName("input")?.namedItem("amount")?.focus())
+}, []);
+
+
+
+    return <div className="w-[100dvh] h-[80dvh]">
 
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="grid grid-cols-6 gap-3 py-1">
+            <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     <FormField
                         control={form.control}
                         name="date"
@@ -133,7 +140,7 @@ export default function PaymentForm() {
                                     Date
                                 </FormLabel>
                                 <FormControl>
-                                    <Input type="date" {...field}  autoFocus ref={dateRef} onKeyDown={focusNext(paymentRef)}/>
+                                    <Input type="date" {...field}  autoFocus />
                                 </FormControl>
                             </FormItem>
                         )} />
@@ -147,26 +154,25 @@ export default function PaymentForm() {
                                 </FormLabel>
                                 <FormControl>
                                     <Select<OptionType>
-                                        options={options}
-                                        placeholder="Payment"
-                                        getOptionValue={(opt) => opt.value}
-                                        getOptionLabel={(opt) => opt.value}
-                                        classNamePrefix={"react-select"}
-                                        value={options.find(o => o.value === field.value) ?? null}
-                                        onChange={(val) => field.onChange(val?.value)}                                        
-                                        ref={paymentRef}
-                                        onKeyDown={focusNext(amtRef)}
-                                        theme={(theme) => ({
-                                            ...theme,
-                                            colors: {
-                                                ...theme.colors,
-                                                neutral0: "var(--background)",
-                                                neutral80: "var(--foreground)",
-                                                primary25: "var(--accent)",
-                                                primary: "var(--ring)",
-                                            },
-                                        })}
-                                    />
+                                                    tabIndex={0}
+                                                    classNamePrefix={"react-selectss"}
+                                                    value={options.find(o => o.value === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?.value)}
+                                                    options={options}
+                                                    getOptionValue={(opt) => opt.value}
+                                                    getOptionLabel={(opt) => opt.label}
+                                                    isSearchable={true}
+                                                    placeholder="Select type"
+                                                    theme={(theme) => ({
+                                                        ...theme,
+                                                        colors: {
+                                                            ...theme.colors,
+                                                            neutral0: "var(--background)",
+                                                            neutral80: "var(--foreground)",
+                                                            primary25: "var(--accent)",
+                                                            primary: "var(--ring)",
+                                                        },
+                                                    })} />
                                 </FormControl>
                             </FormItem>
                         )} />
@@ -180,12 +186,10 @@ export default function PaymentForm() {
                                 </FormLabel>
                                 <FormControl>
                                     <Input inputMode="numeric" {...field}
-                                    ref={amtRef}
                                         onChange={(e) => {
                                             const value = e.target.value.replace(/[^0-9]/g, "");
                                             field.onChange(value);
                                         }}
-                                        onKeyDown={focusNext(reciptRef)}
                                     />
                                 </FormControl>
                             </FormItem>
@@ -204,7 +208,6 @@ export default function PaymentForm() {
                                         accept="image/"
 
                                         // {...field}
-                                        ref={reciptRef}
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0]
                                             if (!file) return
@@ -219,7 +222,6 @@ export default function PaymentForm() {
                                             const base64 = await fileToBase64(file)
                                             field.onChange(base64)
                                         }}
-                                        onKeyDown={focusNext(paidbyRef)}
 
                                     />
                                 </FormControl>
@@ -234,11 +236,11 @@ export default function PaymentForm() {
                                     Paid By
                                 </FormLabel>
                                 <FormControl>
-                                    <Input {...field} ref={paidbyRef} onKeyDown={focusNext(submitRef)}/>
+                                    <Input {...field} />
                                 </FormControl>
                             </FormItem>
                         )} />
-                    <Button type="submit" ref={submitRef} className="mt-6 focus:bg-green-500  focus:text-white">{editIndex !== null ? "Edit" : "Add"}</Button>
+                    <Button type="submit" onKeyDown={() => useDirectFocus({element:"input",name:"date",nextRef:formRef}) } className="mt-6 focus:bg-green-500  focus:text-white">{editIndex !== null ? "Edit" : "Add"}</Button>
                 </div>
             </form>
         </Form>
