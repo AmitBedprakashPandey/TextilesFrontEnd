@@ -18,16 +18,16 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useEnterNavigation } from "@/components/ReuseFunction";
 import { clearCurrentUnit, createUnit, setCloseModel, updateUnit, type unitUpdateState } from "../Redux/features/unitsSlices";
 import z, { set } from "zod";
 
 
 export default function UnitForm() {
   const dispatch = useAppDispatch();
-  const unitNameRef = useRef<HTMLInputElement>(null);
-  const unitShortRef = useRef<HTMLInputElement>(null);
-  const subBtnRef = useRef<HTMLButtonElement>(null);
+const formRef = useRef<HTMLFormElement>(null);
 
+const {handleKeyDown} = useEnterNavigation({formRef,reactSelectClassName: "react-select-container"});
   const { currentUnit, loading } = useAppSelector((state) => state.unitSlice);
 
   const form = useForm<z.infer<typeof unitSchema>>({
@@ -46,38 +46,31 @@ export default function UnitForm() {
 
   function onSubmit(data: z.infer<typeof unitSchema>) {
 
-    try {
+    
       if (currentUnit) {
         dispatch(updateUnit({ ...data, _id: currentUnit._id})).unwrap();
-        toast.success("Updated Successfully");
         form.reset();
         dispatch(setCloseModel())
         dispatch(clearCurrentUnit())
       } else {
         dispatch(createUnit(data)).unwrap();
-        toast.success("Saved Successfully");
         form.reset();
         dispatch(setCloseModel())
         dispatch(clearCurrentUnit())
       }
-    } catch (error) {
-      toast.error("Something went wrong");
-    }
+    
 
 
   }
 
-  const focusNext = (nextRef: React.RefObject<HTMLInputElement | HTMLButtonElement | null>) => (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      nextRef.current?.focus();
-    }
-  }
+  
 
 
   return (
     <Form {...form}>
       <form
+        ref={formRef}
+        onKeyDown={handleKeyDown}
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 bg-muted p-4 rounded-xl"
       >
@@ -88,7 +81,7 @@ export default function UnitForm() {
             <FormItem>
               <FormLabel>Unit Name *</FormLabel>
               <FormControl>
-                <Input {...field} ref={unitNameRef} autoFocus onFocus={(e) => e.target.select()} onKeyDown={focusNext(unitShortRef)} placeholder="Kilogram" />
+                <Input {...field}  autoFocus onFocus={(e) => e.target.select()}  placeholder="Kilogram" />
               </FormControl>
 
             </FormItem>
@@ -102,14 +95,14 @@ export default function UnitForm() {
             <FormItem>
               <FormLabel>Unit Short *</FormLabel>
               <FormControl>
-                <Input {...field} ref={unitShortRef} onFocus={(e) => e.target.select()} onKeyDown={focusNext(subBtnRef)} placeholder="kg" />
+                <Input {...field} onFocus={(e) => e.target.select()} placeholder="kg" />
               </FormControl>
 
             </FormItem>
           )}
         />
 
-        <Button type="submit" className="w-full focus:bg-green-500 focus:text-white " disabled={loading} ref={subBtnRef}>
+        <Button type="submit" className="w-full focus:bg-green-500 focus:text-white " disabled={loading}>
           {currentUnit ? "Update" : "Save"}
         </Button>
       </form>

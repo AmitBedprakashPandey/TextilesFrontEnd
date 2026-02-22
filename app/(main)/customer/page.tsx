@@ -17,6 +17,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import FabricTable from "./FabricTable"
 import CustomDialog from "@/components/CustomDialog"
+import { useAppSelector } from "../Redux/hooks"
+import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice";
+import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice";
 
 type OptionType = {
     value: string
@@ -63,6 +66,9 @@ const formSchema = z.object({
 
 export default function Page() {
     const [open, setOpen] = useState<boolean>(false);
+
+    const {company} = useAppSelector(state => state.company)
+const {vendorList} = useAppSelector(state => state.vendor)
 
     const [meters, setMeters] = useState<number[][]>(
         Array.from({ length: METER_GROUPS }, () =>
@@ -272,14 +278,14 @@ export default function Page() {
                                         <FormItem>
                                             <FormLabel>Company Name</FormLabel>
                                             <FormControl>
-                                                <Select<OptionType>
+                                                <Select<companyUpateState>
                                                     tabIndex={0}
                                                     classNamePrefix={"react-select"}
-                                                    value={options.find(o => o.value === field.value) ?? null}
-                                                    onChange={(val) => field.onChange(val?.value)}
-                                                    options={options}
-                                                    getOptionValue={(opt) => opt.value}
-                                                    getOptionLabel={(opt) => opt.label}
+                                                    value={company.find(o => o._id === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?._id)}
+                                                    options={company}
+                                                    getOptionValue={(opt) => opt._id}
+                                                    getOptionLabel={(opt) => opt.companyName}
                                                     isSearchable={true}
                                                     isClearable={true}
                                                     placeholder="Select Company"
@@ -305,14 +311,14 @@ export default function Page() {
                                         <FormItem>
                                             <FormLabel>Vendor Name</FormLabel>
                                             <FormControl>
-                                                <Select<OptionType>
+                                                <Select<vendorUpdateState>
                                                     tabIndex={0}
                                                     classNamePrefix={"react-select"}
-                                                    value={options.find(o => o.value === field.value) ?? null}
-                                                    onChange={(val) => field.onChange(val?.value)}
-                                                    options={options}
-                                                    getOptionValue={(opt) => opt.value}
-                                                    getOptionLabel={(opt) => opt.label}
+                                                    value={vendorList.find(o => o._id === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?._id)}
+                                                    options={vendorList}
+                                                    getOptionValue={(opt) => opt._id}
+                                                    getOptionLabel={(opt) => opt.vendorname}
                                                     isSearchable={true}
                                                     placeholder="Select vendor"
                                                     theme={(theme) => ({

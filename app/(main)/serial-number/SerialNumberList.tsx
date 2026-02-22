@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner";
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
+import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
 export default function SerialNumberList() {
 
   const [deleteModel, setDeleteModel] = useState<{
@@ -38,13 +39,9 @@ export default function SerialNumberList() {
   }
 
   function onDelete(_id: string) {
-    try {
       dispatch(deleteSerialNumber(_id)).unwrap();
-      toast.success("Deleted Successfully");
       setDeleteModel({ open: false, _id: "" });
-    } catch (error) {
-      toast.warning("Something went wrong");
-    }
+
   }
 
 
@@ -91,21 +88,9 @@ export default function SerialNumberList() {
         </TableBody>
       </Table>
 
-      <AlertDialog open={deleteModel?.open}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account
-              and remove your data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteModel({ open: false, _id: "" })}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (deleteModel?._id) { onDelete(deleteModel?._id) } }} className="bg-red-600 text-white hover:bg-red-800 ">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
+
+      <CustomeCofirmDailog open={deleteModel.open} close={() => setDeleteModel({ open: false, _id: "" })} confirm={() => { if (deleteModel._id) { onDelete(deleteModel._id) } }} />
     </div>
   );
 }

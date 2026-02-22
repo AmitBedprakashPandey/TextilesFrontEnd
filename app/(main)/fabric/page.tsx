@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useLayoutEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import Select from 'react-select'
 import { Label } from "@/components/ui/label"
@@ -11,10 +11,12 @@ import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { X } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import FabricTable from "./FabricTable"
 import CustomDialog from "@/components/CustomDialog"
+import { useAppSelector } from "../Redux/hooks"
+import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice";
+import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice";
 
 type OptionType = {
     value: string
@@ -66,8 +68,9 @@ export default function Page() {
             Array(TOTAL_INPUTS).fill(0)
         )
     )
-    // one ref per input (stable)
 
+    const company = useAppSelector(state => state.company.company);
+    const vendorList = useAppSelector(state => state.vendor.vendorList);
     const handleChange = (
         groupIndex: number,
         inputIndex: number,
@@ -258,14 +261,14 @@ export default function Page() {
                                         <FormItem>
                                             <FormLabel>Company Name</FormLabel>
                                             <FormControl>
-                                                <Select<OptionType>
+                                                <Select<companyUpateState>
                                                     tabIndex={0}
                                                     classNamePrefix={"react-select"}
-                                                    value={options.find(o => o.value === field.value) ?? null}
-                                                    onChange={(val) => field.onChange(val?.value)}
-                                                    options={options}
-                                                    getOptionValue={(opt) => opt.value}
-                                                    getOptionLabel={(opt) => opt.label}
+                                                    value={company.find(o => o._id === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?._id)}
+                                                    options={company}
+                                                    getOptionValue={(opt) => opt._id}
+                                                    getOptionLabel={(opt) => opt.companyName}
                                                     isSearchable={true}
                                                     isClearable={true}
                                                     placeholder="Select Company"
@@ -291,14 +294,14 @@ export default function Page() {
                                         <FormItem>
                                             <FormLabel>Vendor Name</FormLabel>
                                             <FormControl>
-                                                <Select<OptionType>
+                                                <Select<vendorUpdateState>
                                                     tabIndex={0}
                                                     classNamePrefix={"react-selectss"}
-                                                    value={options.find(o => o.value === field.value) ?? null}
-                                                    onChange={(val) => field.onChange(val?.value)}
-                                                    options={options}
-                                                    getOptionValue={(opt) => opt.value}
-                                                    getOptionLabel={(opt) => opt.label}
+                                                    value={vendorList.find(o => o._id === field.value) ?? null}
+                                                    onChange={(val) => field.onChange(val?._id)}
+                                                    options={vendorList}
+                                                    getOptionValue={(opt) => opt._id}
+                                                    getOptionLabel={(opt) => opt.vendorname}
                                                     isSearchable={true}
                                                     placeholder="Select vendor"
                                                     theme={(theme) => ({

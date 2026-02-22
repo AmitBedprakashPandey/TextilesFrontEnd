@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { addFabric, addGrandTotal, deleteFabric, updateFabric } from "../Redux/features/TailorFabricSlice";
+import { useDirectFocus, useEnterNavigation } from "@/components/ReuseFunction";
 
 const itemSchema = z.object({
     itemName: z.string().min(1),
@@ -35,6 +36,7 @@ interface submitSchema {
     narration: string
     grandMeters: number
     diffMeters: number
+
     grandAmount: number
     pendingAmount: number
 }
@@ -54,6 +56,9 @@ export default function FabriRecivedForm() {
 
     const [items, setItems] = useState<tableProps[]>([])
     const [editIndex, setEditIndex] = useState<number | null>(null)
+
+    const formRef = useRef<HTMLFormElement>(null)
+    const { handleKeyDown } = useEnterNavigation({ formRef, reactSelectClassName: "react-select-container" });
 
     const form = useForm<ItemForm>({
         resolver: zodResolver(itemSchema),
@@ -77,9 +82,9 @@ export default function FabriRecivedForm() {
     const garndAmount = fabricStatus.fabric.reduce((acc, item) => acc + Number(item.totalAmt), 0)
     const grandMeters = fabricStatus.fabric.reduce((acc, item) => acc + Number(item.totalMtrs), 0)
 
-    useEffect(()=>{
-        disptach(addGrandTotal({grandAmount: garndAmount, grandMeters: grandMeters}))
-    },[grandMeters,garndAmount])
+    useEffect(() => {
+        disptach(addGrandTotal({ grandAmount: garndAmount, grandMeters: grandMeters }))
+    }, [grandMeters, garndAmount])
 
     const onSubmit = (data: ItemForm) => {
 
@@ -114,7 +119,7 @@ export default function FabriRecivedForm() {
             rate: item.rate,
             date: item.date,
         })
-        
+
         setEditIndex(index)
     }
 
@@ -143,7 +148,7 @@ export default function FabriRecivedForm() {
     return (
         <div className="w-full h-[90dvh] relative">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
+                <form ref={formRef} onKeyDown={handleKeyDown} onSubmit={form.handleSubmit(onSubmit)}>
                     <div className="flex grow gap-2 items-center ">
 
                         <FormField
@@ -154,8 +159,8 @@ export default function FabriRecivedForm() {
                                     <FormLabel>
                                         Date
                                     </FormLabel>
-                                    <FormControl ref={dateRef}>
-                                        <Input type="date" {...field} onFocus={(e) => e.target.select} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), itemRef.current?.focus(), itemRef.current?.select())} />
+                                    <FormControl>
+                                        <Input type="date" autoFocus {...field} />
                                     </FormControl>
                                 </FormItem>
                             )} />
@@ -167,11 +172,9 @@ export default function FabriRecivedForm() {
                                     <FormLabel>
                                         Item Name
                                     </FormLabel>
-                                    <FormControl ref={itemRef}>
+                                    <FormControl>
                                         <Input
-                                            autoFocus
-                                            {...field} onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), pcsRef.current?.focus(), pcsRef.current?.select())}
+                                                                                        {...field} 
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -184,14 +187,12 @@ export default function FabriRecivedForm() {
                                     <FormLabel>
                                         No. Prices
                                     </FormLabel>
-                                    <FormControl ref={pcsRef}>
+                                    <FormControl >
                                         <Input type="number" inputMode="numeric"  {...field}
                                             onChange={(e) => {
                                                 const value = e.target.value.replace(/[^0-9]/g, "");
                                                 field.onChange(value);
                                             }}
-                                            onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), avgRef.current?.focus(), avgRef.current?.select())}
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -204,14 +205,13 @@ export default function FabriRecivedForm() {
                                     <FormLabel>
                                         Avg. Meters
                                     </FormLabel>
-                                    <FormControl ref={avgRef}>
+                                    <FormControl>
                                         <Input inputMode="decimal" {...field}
                                             onChange={(e) => {
                                                 const value = e.target.value.replace(/[^0-9.]/g, "");
                                                 field.onChange(value);
                                             }}
-                                            onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), rateRef.current?.focus(), rateRef.current?.select())}
+                                            
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -224,14 +224,13 @@ export default function FabriRecivedForm() {
                                     <FormLabel>
                                         Rate
                                     </FormLabel>
-                                    <FormControl ref={rateRef}>
+                                    <FormControl >
                                         <Input inputMode="numeric" type="number" {...field}
                                             onChange={(e) => {
                                                 const value = e.target.value.replace(/[^0-9]/g, "");
                                                 field.onChange(value);
                                             }}
-                                            onFocus={(e) => e.target.select}
-                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), subBtnRef.current?.focus())}
+                                            
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -247,47 +246,78 @@ export default function FabriRecivedForm() {
                             <Input inputMode="decimal" disabled type="number" className="mt-2" value={autoTotalAmt.toFixed(2)} name="totalAmt" />
                         </div>
 
-                        <Button type="submit" ref={subBtnRef}
-                        onKeyDown={(e)=>e.key === "Enter" && (itemRef.current?.focus(), itemRef.current?.select())}
-                            className="focus:bg-green-500  focus:text-white col-span-full mt-5">{editIndex !== null ? "Edit" : "Add"}</Button>
+
+                    </div>
+                    <div className="flex items-center gap-3 relative mt-3 w-full p-3">
+                        <div>
+                            <Label>Narration</Label>
+                            <Textarea value={narration} onChange={(e) => setNarration(e.target.value)} className="h-full w-80" rows={3} maxLength={100} />
+                        </div>
+
+                        <div>
+                            <Label>Grand Total</Label>
+                            <Input inputMode="decimal" disabled type="number" className="mt-2" value={garndAmount.toFixed(2)} name="grandTotal" />
+                        </div>
+                        <div>
+                            <Label>Grand Meters</Label>
+                            <Input inputMode="decimal" disabled type="number" className="mt-2" value={grandMeters.toFixed(2)} name="grandMeters" />
+                        </div>
+                        <div>
+                            <Label>Difference in Meters</Label>
+                            <Input inputMode="decimal" disabled type="number" className="mt-2" value={diffMtrs.toFixed(2)} name="diffMeters" />
+                        </div>
+                        <div>
+                            <Label>Round off Meters</Label>
+                            <Input inputMode="decimal" type="number" className="mt-2" name="roundOffMeters" />
+                        </div>
+                    <Button type="submit" ref={subBtnRef}
+                    onKeyDown={()=>useDirectFocus({element:"input",name:'date',nextRef:formRef})}
+                        className="focus:bg-green-500  focus:text-white col-span-full mt-8">{editIndex !== null ? "Edit" : "Add"}</Button>
                     </div>
 
-                    <Separator className="my-3" />
-                    <div className="relative max-h-64 overflow-y-auto ">
-                        <Table className="sticky top-0 bg-background z-10">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Pcs</TableHead>
-                                    <TableHead>Avg Mtrs</TableHead>
-                                    <TableHead>Total Mtrs</TableHead>
-                                    <TableHead>Rate</TableHead>
-                                    <TableHead>Total Amt</TableHead>
-                                    <TableHead>Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody className=" overflow-y-auto">
-                                {fabricStatus.fabric.map((row, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell>{row.date}</TableCell>
-                                        <TableCell>{row.itemName}</TableCell>
-                                        <TableCell>{row.pcs}</TableCell>
-                                        <TableCell>{row.avgMtrs}</TableCell>
-                                        <TableCell>{row.totalMtrs}</TableCell>
-                                        <TableCell>{row.rate}</TableCell>
-                                        <TableCell>{row.totalAmt}</TableCell>
-                                        <TableCell>
-                                            <Button size="sm" variant="outline" type="button"  onClick={() => {onEdit(i),itemRef.current?.select(),itemRef.current?.focus()}}><Edit /></Button>
-                                            <Button size="sm" variant="outline" type="button" onClick={() => onDelete(i)}><Trash /></Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+
+
                 </form>
             </Form>
+
+            <Separator className="my-3" />
+            <div className="relative max-h-64 overflow-y-auto ">
+                <Table className=" bg-background z-10">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Pcs</TableHead>
+                            <TableHead>Avg Mtrs</TableHead>
+                            <TableHead>Total Mtrs</TableHead>
+                            <TableHead>Rate</TableHead>
+                            <TableHead>Total Amt</TableHead>
+                            <TableHead>Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className=" overflow-y-auto">
+                        {fabricStatus.fabric.map((row, i) => (
+                            <TableRow key={i}>
+                                <TableCell>{row.date}</TableCell>
+                                <TableCell>{row.itemName}</TableCell>
+                                <TableCell>{row.pcs}</TableCell>
+                                <TableCell>{row.avgMtrs}</TableCell>
+                                <TableCell>{row.totalMtrs}</TableCell>
+                                <TableCell>{row.rate}</TableCell>
+                                <TableCell>{row.totalAmt}</TableCell>
+                                <TableCell>
+                                    <Button size="sm" variant="outline" type="button" onClick={() => { onEdit(i), itemRef.current?.select(), itemRef.current?.focus() }}><Edit /></Button>
+                                    <Button size="sm" variant="outline" type="button" onClick={() => onDelete(i)}><Trash /></Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+
+
+
         </div>
 
 

@@ -24,13 +24,21 @@ import { useAppSelector,useAppDispatch } from "../Redux/hooks";
 import CustomDialog from "@/components/CustomDialog";
 import { setOpenFabric,setOpenPayment } from "@/app/(main)/Redux/features/TailorFabricSlice";
 import { useNewtabOpener } from "@/components/ReuseFunction";
+import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
 
 export default function FabricTable() {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState({open:false,id:""});
 const dispatch = useAppDispatch()
     const { fabricStatus,openFabric,openPayment } = useAppSelector((state) => state.TailorFabric)
 
     const printPaper = () => {
         useNewtabOpener("print");
+    }
+
+    const handleDelete = (id: string) => {
+        // Implement delete logic here, e.g., call an API to delete the item
+        console.log(`Deleting item with id: ${id}`);
+        setDeleteDialogOpen({open:false,id:""});
     }
 
 
@@ -80,22 +88,8 @@ const dispatch = useAppDispatch()
                             <Button type="button" onClick={() => dispatch(setOpenPayment(true))}><IndianRupee /></Button>
                             <Button type="button" onClick={printPaper} ><Printer /></Button>
                             <Button type="button" ><Receipt /></Button>
-                            <AlertDialog>
-                                <AlertDialogTrigger> <Button type="button" variant="destructive" className="rounded-full"><Trash /></Button></AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your account
-                                            and remove your data from our servers.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction>Continue</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <Button type="button" onClick={() => setDeleteDialogOpen({open:true,id:"123"})}><Trash /></Button>
+                            
                         </TableCell>
                     </TableRow>
                 </TableBody>
@@ -105,7 +99,7 @@ const dispatch = useAppDispatch()
 
         {/* Recived Fabric & Payment */}
        
-
+<CustomeCofirmDailog open={deleteDialogOpen.open} close={() => setDeleteDialogOpen({open:false,id:""})} confirm={() => {}} lable="Delete" />
         <CustomDialog   open={openPayment} close={() => dispatch(setOpenPayment(false))} title="Payment Entry"> <PaymentForm /> </CustomDialog>
 
         <CustomDialog   open={openFabric} close={() => dispatch(setOpenFabric(false))} title="Fabric Received Entry"> <FabriRecivedForm /> </CustomDialog>

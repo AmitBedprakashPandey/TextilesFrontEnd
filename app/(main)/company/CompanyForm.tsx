@@ -10,77 +10,86 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import Select from "react-select";
 import { Button } from "@/components/ui/button";
-
+import { stateData } from "@/app/(main)/Redux/MockData";
 import {
   companyFormSchema,
   CompanyFormValues,
 } from "./companyFormSchema";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { toast } from "sonner";
-import { createCompany, setCloseModel, updateCompany } from "../Redux/features/CompanySlice";
+import { createCompany, setCloseModel, updateCompany, clearCurrentCompany } from "../Redux/features/CompanySlice";
+import { useEnterNavigation } from "@/components/ReuseFunction";
+
+type OptionType = {
+  name: string
+  code: string
+}
 
 export default function CompanyForm() {
-
-  const { currentCompany, loading } = useAppSelector((state) => state.company);
   const dispatch = useAppDispatch();
+  const { currentCompany, loading } = useAppSelector((state) => state.company);
+
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const { handleKeyDown } = useEnterNavigation({ formRef, reactSelectClassName: "react-select-container" })
+
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
-    defaultValues: {
-      companyName: "",
-      ownerName: "",
-      gstin: "",
-    },
   });
+
+
+  useEffect(() => {
+    if (currentCompany) {
+      form.reset(currentCompany);
+    }
+  }, [currentCompany, form]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.key.toLowerCase() === "s"
-      ) {
-        e.preventDefault(); // stop browser save
+      // Ctrl + S (Windows/Linux) OR Cmd + S (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+
         form.handleSubmit(onSubmit)();
-        close();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [form]);
 
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [form, onSubmit]);
 
   function onSubmit(values: CompanyFormValues) {
-    try {
-      if (currentCompany) {
-        dispatch(updateCompany({ ...values, _id: currentCompany._id })).unwrap();
-        toast.success("Company Updated Successfully");
 
-      } else {
-        dispatch(createCompany(values)).unwrap();
-        toast.success("Company Created Successfully");
-       }
-       dispatch(setCloseModel())
-       form.reset()
-    } catch (error) {
-      toast.error("Something went wrong");
+    if (currentCompany) {
+      dispatch(updateCompany({ ...values, _id: currentCompany._id })).unwrap();
+      dispatch(clearCurrentCompany())
+    } else {
+      dispatch(createCompany(values)).unwrap();
+      dispatch(clearCurrentCompany())
     }
+    dispatch(setCloseModel())
+    form.reset()
+
 
   }
 
   return (
     <Form {...form}>
       <form
+        ref={formRef}
+        onKeyDown={handleKeyDown}
+
         onSubmit={form.handleSubmit(onSubmit)}
+        onErrorCapture={() => console.log(form.formState.errors)}
         className="space-y-6 max-w-4xl mx-auto p-6 rounded-xl"
       >
         {/* Company Info */}
@@ -92,7 +101,10 @@ export default function CompanyForm() {
               <FormItem className="md:col-span-2">
                 <FormLabel>Company Name *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} autoFocus onChange={(e) => {
+                    const val = e.target.value.replace(/[^a-z A-Z .]/g, "");
+                    field.onChange(val);
+                  }} />
                 </FormControl>
               </FormItem>
             )}
@@ -102,10 +114,15 @@ export default function CompanyForm() {
             control={form.control}
             name="ownerName"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="md:col-span-2">
                 <FormLabel>Owner Name *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^a-z A-Z]/g, "");
+                      field.onChange(val);
+                    }}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -113,63 +130,201 @@ export default function CompanyForm() {
 
 
 
+        </div>
 
 
+
+
+        {/* Billing Address */}
+        <h3 className="font-semibold">Billing Address</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <FormField
             control={form.control}
-            name="bankName"
+            name="billingStreet1"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Bank & Branch</FormLabel>
-                <FormControl>
-                  <Input className="w-full" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="bankAccNo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bank A/C No</FormLabel>
+                <FormLabel>Street 1 *</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="billingStreet2"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Street 2</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="billingStreet3"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Street 3</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="billingMobile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mobile No *</FormLabel>
+                <FormControl>
+                  <Input {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      field.onChange(val.slice(0, 10));
+                    }}
+                  />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="billingPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone No</FormLabel>
+                <FormControl>
+                  <Input {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      field.onChange(val.slice(0, 10));
+                    }}
+                  />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="billingEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="gstin"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>GSTIN</FormLabel>
+                <FormControl>
+                  <Input {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                      field.onChange(val.slice(0, 15));
+                    }}
+                  />
+                </FormControl>
+
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="pan"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>PAN</FormLabel>
+                <FormControl>
+                  <Input {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                      field.onChange(val.slice(0, 10));
+                    }}
+                  />
+                </FormControl>
+
               </FormItem>
             )}
           />
         </div>
 
-        {/* State / City / Area / Tax */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {["state", "city", "area"].map((name) => (
-            <FormField
-              key={name}
-              control={form.control}
-              name={name as keyof CompanyFormValues}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="capitalize">
-                    {name.replace(/([A-Z])/g, " $1") + "*"}
-                  </FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={`Select ${name}`} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="option1">Option 1</SelectItem>
-                      <SelectItem value="option2">Option 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+        {/* state/city/pincode */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                </FormItem>
-              )}
-            />
-          ))}
+
+          <FormField
+            control={form.control}
+            name="state"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="capitalize">
+                  State *
+                </FormLabel>
+                <FormControl>
+                  <Select<OptionType>
+                    tabIndex={0}
+                    classNamePrefix={"react-select"}
+                    value={stateData.find(o => o.name === field.value) ?? null}
+                    onChange={(val) => field.onChange(val?.name)}
+                    options={stateData}
+                    getOptionValue={(opt) => opt.name}
+                    getOptionLabel={(opt) => opt.name}
+                    isSearchable={true}
+                    isClearable={true}
+                    placeholder="Select state"
+                    className="col-span-4"
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        neutral0: "var(--background)",
+                        neutral80: "var(--foreground)",
+                        primary25: "var(--accent)",
+                        primary: "var(--ring)",
+                      },
+                    })} />
+
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="capitalize">
+                  City *
+                </FormLabel>
+                <FormControl>
+                  <Input type="text" className="w-full" {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^a-zA-Z]/g, "");
+                      field.onChange(val);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="pincode"
@@ -177,38 +332,24 @@ export default function CompanyForm() {
               <FormItem>
                 <FormLabel>Pincode *</FormLabel>
                 <FormControl>
-                  <Input className="w-full" {...field} />
+                  <Input className="w-full" {...field}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      field.onChange(val.slice(0, 6));
+                    }}
+
+                  />
                 </FormControl>
               </FormItem>
             )}
           />
-        </div>
 
-        {/* Billing Address */}
-        <h3 className="font-semibold">Billing Address</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InputField form={form} name="billingStreet1" label="Street 1 *" />
-          <InputField form={form} name="billingStreet2" label="Street 2" />
-          <InputField form={form} name="billingStreet3" label="Street 3" />
-          <InputField form={form} name="billingMobile" label="Mobile No *" />
-          <InputField form={form} name="billingPhone" label="Phone No" />
-          <InputField form={form} name="billingEmail" label="Email" />
-        </div>
 
-        {/* Shipping Address */}
-        <h3 className="font-semibold">Shipping Address</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InputField form={form} name="shippingStreet1" label="Street 1" />
-          <InputField form={form} name="shippingStreet2" label="Street 2" />
-          <InputField form={form} name="shippingStreet3" label="Street 3" />
-          <InputField form={form} name="shippingMobile" label="Mobile No" />
-          <InputField form={form} name="shippingPhone" label="Phone No" />
-          <InputField form={form} name="shippingEmail" label="Email" />
         </div>
 
         <div className="flex justify-end">
-          
-          <Button type="submit" variant="default">
+
+          <Button type="submit" variant="default" className="focus:bg-green-500">
             {currentCompany ? "UPDATE" : "SAVE"}
           </Button>
         </div>
@@ -217,28 +358,3 @@ export default function CompanyForm() {
   );
 }
 
-function InputField({
-  form,
-  name,
-  label,
-}: {
-  form: any;
-  name: string;
-  label: string;
-}) {
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input {...field} />
-          </FormControl>
-
-        </FormItem>
-      )}
-    />
-  );
-}

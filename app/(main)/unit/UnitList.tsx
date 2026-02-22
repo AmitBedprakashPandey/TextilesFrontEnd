@@ -4,22 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { Edit, Trash } from "lucide-react";
 import CustomLoading from "@/components/CustomLoading";
-import { SetCurrentUnit, deleteUnit, fetchUnit, setOpenModel, type unitUpdateState } from "@/app/(main)/Redux/features/unitsSlices";
-import { useEffect, useState } from "react";
-import { on } from "events";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { SetCurrentUnit, deleteUnit, setOpenModel, type unitUpdateState } from "@/app/(main)/Redux/features/unitsSlices";
+import { useState } from "react";
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
 
 export default function UnitList() {
   const [deleteModel, setDeleteModel] = useState<{ open: boolean; _id: string | null; }>({ open: false, _id: null, });
@@ -35,13 +24,8 @@ export default function UnitList() {
   }
 
   function onDelete(_id: string) {
-    try {
       dispatch(deleteUnit(_id)).unwrap();
-      toast.success("Deleted Successfully");
       setDeleteModel({ open: false, _id: "" });
-    } catch (error) {
-      toast.error("Something went wrong");
-    }
 
   }
 
@@ -82,21 +66,8 @@ export default function UnitList() {
           ))}
         </TableBody>
       </Table>
-      <AlertDialog open={deleteModel?.open}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account
-              and remove your data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteModel({ _id: null, open: false })}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (deleteModel._id) { onDelete(deleteModel._id) } }}>Continue</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
+      <CustomeCofirmDailog open={deleteModel.open} close={() => setDeleteModel({ _id: null, open: false })} confirm={() => { if (deleteModel._id) { onDelete(deleteModel._id) } }} />
       {loading && <CustomLoading />}
     </div>
   );

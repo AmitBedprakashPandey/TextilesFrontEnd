@@ -1,30 +1,35 @@
 import { serialNumberApi } from '@/lib/api/services'
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { clear, log } from 'console'
 
 export interface serialNumberState {
     prefix: string,
-    startNumber: number,
-    currentNumber: number,
+    startNumber: string,
+    currentNumber: string,
+    companyid: string
 }
 const serialNumberState: serialNumberState = {
     prefix: '',
-    startNumber: 0,
-    currentNumber: 0
+    startNumber: '' ,
+    currentNumber: '',
+    companyid: ''
 }
 
 export interface serialNumberUpateState {
     _id: string,
     prefix: string,
-    startNumber: number,
-    currentNumber: number,
+    startNumber: string,
+    currentNumber: string   ,
+    companyid: string
 }
 
 
 const serialNumberUpateState: serialNumberUpateState = {
     _id: '',
     prefix: '',
-    startNumber: 0,
-    currentNumber: 0
+    startNumber: '',
+    currentNumber: '',
+    companyid: ''
 }
 
 interface props {
@@ -49,8 +54,8 @@ export const fetchSerialNumbers = createAsyncThunk('serialNumber/fetchSerialNumb
     try {
         const response = await serialNumberApi.getAll();
         return response as serialNumberUpateState[];
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -59,8 +64,8 @@ export const createSerialNumber = createAsyncThunk('serialNumber/createSerialNum
     try {
         const response = await serialNumberApi.create(serialNumber);
         return response as serialNumberUpateState;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -70,8 +75,8 @@ export const updateSerialNumber = createAsyncThunk('serialNumber/updateSerialNum
         const response = await serialNumberApi.update(serialNumber._id, serialNumber);
         return response as serialNumberUpateState;
 
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -80,8 +85,8 @@ export const deleteSerialNumber = createAsyncThunk('serialNumber/deleteSerialNum
     try {
         await serialNumberApi.delete(id);
         return id;
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -90,8 +95,8 @@ export const updateCurrentSerialNumber = createAsyncThunk('serialNumber/updateCu
     try {
         const response = await serialNumberApi.updateCurrentNumber(serialNumber._id, serialNumber);
         return response as serialNumberState;
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -115,6 +120,12 @@ export const counterSlice = createSlice({
         setCloseModel: (state) => {
             state.openModel = false;
         },
+        clearMessage: (state) => {  
+            state.message = null;
+        },
+        clearError: (state) => {
+            state.error = null;
+        }
 
 
     },
@@ -138,6 +149,7 @@ export const counterSlice = createSlice({
             })
             .addCase(createSerialNumber.fulfilled, (state, action: PayloadAction<serialNumberUpateState>) => {
                 state.loading = false;
+                state.message = "Created Successfully";
                 state.serialNumber.push(action.payload);
             })
             .addCase(createSerialNumber.rejected, (state, action) => {
@@ -154,6 +166,7 @@ export const counterSlice = createSlice({
                 if (index !== -1) {
                     state.serialNumber[index] = action.payload;
                 }
+                state.message = "Updated Successfully";
             })
             .addCase(updateSerialNumber.rejected, (state, action) => {
                 state.loading = false;
@@ -166,6 +179,7 @@ export const counterSlice = createSlice({
             .addCase(deleteSerialNumber.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
                 state.serialNumber = state.serialNumber.filter(serialNumber => serialNumber._id !== action.payload);
+                state.message = "Deleted Successfully";
             })
             .addCase(deleteSerialNumber.rejected, (state, action) => {
                 state.loading = false;
@@ -176,6 +190,6 @@ export const counterSlice = createSlice({
     }
 })
 
-export const { setCurrentSerialNumber, clearCurrentSerialNumber, setOpenModel, setCloseModel } = counterSlice.actions
+export const { setCurrentSerialNumber, clearCurrentSerialNumber, setOpenModel, setCloseModel , clearMessage, clearError} = counterSlice.actions
 
 export default counterSlice.reducer

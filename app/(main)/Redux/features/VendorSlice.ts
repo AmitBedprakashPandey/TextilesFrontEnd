@@ -5,7 +5,7 @@ import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/tool
 export interface vendorState {
     vendorCategory: string,
 
-    companyname: string,
+    vendorname: string,
     ownername?: string,
 
     gstin?: string,
@@ -27,7 +27,7 @@ export interface vendorState {
     ifsc?: string,
     branch?: string,
 
-    gsttype:string,
+    
 }
 
 const vendorProps: vendorState = {
@@ -36,7 +36,7 @@ const vendorProps: vendorState = {
     address1: '',
     bankname: '',
     city: '',
-    companyname: '',
+    vendorname: '',
     email: '',
     gstin: '',
     ifsc: '',
@@ -48,15 +48,13 @@ const vendorProps: vendorState = {
     pincode: '',
     state: '',
     vendorCategory: "",
-    gsttype: ""
 }
 
 export interface vendorUpdateState {
     _id: string,
-
      vendorCategory:string,
 
-    companyname: string,
+    vendorname: string,
     ownername?: string,
 
     gstin?: string,
@@ -78,7 +76,6 @@ export interface vendorUpdateState {
     ifsc?: string,
     branch?: string,
 
-    gsttype:string,
 
 }
 
@@ -89,7 +86,7 @@ const vendorUpdateProps: vendorUpdateState = {
     address1: '',
     bankname: '',
     city: '',
-    companyname: '',
+    vendorname: '',
     email: '',
     gstin: '',
     ifsc: '',
@@ -101,7 +98,6 @@ const vendorUpdateProps: vendorUpdateState = {
     pincode: '',
     state: '',
     vendorCategory: "",
-    gsttype: ""
 
 }
 
@@ -127,8 +123,8 @@ export const fetchVendor = createAsyncThunk('vendor/fetchVendor', async (_, { re
     try {
         const response = await vendorApi.getAll();
         return response as vendorUpdateState[];
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 })
 
@@ -136,8 +132,8 @@ export const createVendor = createAsyncThunk('vendor/createVendor', async (vendo
     try {
         const response = await vendorApi.create(vendor);
         return response as vendorUpdateState;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -147,8 +143,8 @@ export const updateVendor = createAsyncThunk('vendor/updateVendor', async (vendo
         const response = await vendorApi.update(vendor._id, vendor);
         return response as vendorUpdateState;
 
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -157,8 +153,8 @@ export const deleteVendor = createAsyncThunk('vendor/deleteVendor', async (id: s
     try {
         await vendorApi.delete(id);
         return id;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -179,6 +175,13 @@ export const counterSlice = createSlice({
         setCloseModel: (state) => {
             state.openModel = false;
         },
+        clearMessage: (state) => {
+            state.message = null;
+        },
+        clearError: (state) => {
+            state.error = null;
+        }
+
 
 
     },
@@ -203,6 +206,7 @@ export const counterSlice = createSlice({
             .addCase(createVendor.fulfilled, (state, action: PayloadAction<vendorUpdateState>) => {
                 state.loading = false;
                 state.vendorList.push(action.payload);
+                state.message = "Created Successfully";
             })
             .addCase(createVendor.rejected, (state, action) => {
                 state.loading = false;
@@ -218,6 +222,7 @@ export const counterSlice = createSlice({
                 if (index !== -1) {
                     state.vendorList[index] = action.payload;
                 }
+                state.message = "Updated Successfully";
             })
             .addCase(updateVendor.rejected, (state, action) => {
                 state.loading = false;
@@ -230,6 +235,7 @@ export const counterSlice = createSlice({
             .addCase(deleteVendor.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
                 state.vendorList = state.vendorList.filter(vendorList => vendorList._id !== action.payload);
+                state.message = "Deleted Successfully";
             })
             .addCase(deleteVendor.rejected, (state, action) => {
                 state.loading = false;
@@ -240,6 +246,6 @@ export const counterSlice = createSlice({
     }
 })
 
-export const { SetCurrentVendor, clearCurrentVendor, setOpenModel, setCloseModel } = counterSlice.actions
+export const { SetCurrentVendor, clearCurrentVendor, setOpenModel, setCloseModel, clearMessage, clearError } = counterSlice.actions
 
 export default counterSlice.reducer

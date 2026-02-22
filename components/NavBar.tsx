@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link";
 import { ThemeToggle } from "../components/theme-toggle";
 import {
@@ -10,6 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { Home, LayoutDashboard } from "lucide-react";
+import { useEffect } from "react";
+import { useAppDispatch } from "@/app/(main)/Redux/hooks";
+import { fetchCompanys } from "@/app/(main)/Redux/features/CompanySlice";
+import { fetchVendor } from "@/app/(main)/Redux/features/VendorSlice";
 
 const items = [
     {
@@ -18,7 +23,8 @@ const items = [
         content: <div className="flex flex-col">
             <Link href={'/company'} className="px-6 py-1 hover:bg-red-600">- Company</Link>
             <Link href={'/vendor'} className="px-6 py-1 hover:bg-red-600">- Vender</Link>
-            <Link href={'/city'} className="px-6 py-1 hover:bg-red-600">- City</Link>
+            <Link href={'/master/fabric'} className="px-6 py-1 hover:bg-red-600">- Fabric</Link>
+            <Link href={'/master/readymade'} className="px-6 py-1 hover:bg-red-600">- Ready Made</Link>
             <Link href={'/unit'} className="px-6 py-1 hover:bg-red-600">- Unit</Link>
             <Link href={'/serial-number'} className="px-6 py-1 hover:bg-red-600">- Serial Number</Link>
         </div>
@@ -44,6 +50,13 @@ const items = [
 
 
 export default function NavBar() {
+const dispatch = useAppDispatch();
+    useEffect(() => {
+        dispatch(fetchCompanys());
+        dispatch(fetchVendor());
+    }, [])
+
+
     return (<div className="w-72 h-[100vh] bg-red-500 relative">
         <div className="bg-linear-to-l from-red-500 to-orange-500 flex  items-center justify-between p-3">
             <h1 className="text-white  font-bold flex  gap-2"><LayoutDashboard />Dashboard</h1>

@@ -17,18 +17,32 @@ import { Edit, Plus, RefreshCcw, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import CompanyTable from "./CompanyTable";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
-import { clearCurrentCompany, setOpenModel, setCloseModel, fetchCompanys, setCurrentCompany, } from "@/app/(main)/Redux/features/CompanySlice";
+import { clearCurrentCompany, setOpenModel, setCloseModel, fetchCompanys, setCurrentCompany,clearError,clearMessage } from "@/app/(main)/Redux/features/CompanySlice";
 import CustomLoading from "@/components/CustomLoading";
+import { toast } from "sonner";
 export default function page() {
-    const { openModel, loading } = useAppSelector((state) => state.company);
+    const { company,openModel, loading,message,error } = useAppSelector((state) => state.company);
     const dispatch = useAppDispatch();
 
     function refresh() {
-        dispatch(fetchCompanys());
+            dispatch(fetchCompanys());
     }
 
     useEffect(() => {
+        if (error) {
+            toast.error(error);
+            dispatch(clearError());
+        }
+        if (message) {
+            toast.success(message);
+            dispatch(clearMessage());
+        }
+    }, [error, message]);
+
+    useEffect(() => {
+        if (company.length === 0) {
         refresh();
+        }
     }, [dispatch]);
 
 
@@ -38,7 +52,7 @@ export default function page() {
                 <Label className="font-bold text-3xl">Company</Label>
                 <div className="flex items-center gap-3">
                     <Button onClick={() => { dispatch(setOpenModel(true)); dispatch(clearCurrentCompany()) }} type="button" variant="default" className="capitalize"><Plus /> Create</Button>
-                    <Button onClick={refresh} className="capitalize"><RefreshCcw /></Button>
+                    <Button onClick={refresh} className="capitalize">{loading? <div className="animate-spin"><RefreshCcw  /></div> : <RefreshCcw />}</Button>
                 </div>
             </div>
             <CustomeDialog open={openModel} close={() => { dispatch(clearCurrentCompany()); dispatch(setCloseModel()) }} title="Company Details" children={<CompanyForm />} />

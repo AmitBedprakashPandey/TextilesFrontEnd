@@ -37,47 +37,85 @@ export const useEnterNavigation = ({
     formRef,
     reactSelectClassName = "rs__control",
 }: Options) => {
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (e.key !== "Enter") return;
 
-            e.preventDefault(); // prevent submit
+    const focusNext = (currentEl: HTMLElement, backward = false) => {
+        const form = formRef.current;
+        if (!form) return;
 
-            const form = formRef.current;
-            if (!form) return;
+        const focusable = Array.from(
+            form.querySelectorAll<HTMLElement>(
+                `input:not([disabled]),
+                 textarea:not([disabled]),
+                 select:not([disabled]),
+                 button:not([disabled]),
+                 [tabindex]:not([tabindex="-1"])`
+            )
+        ).filter((el) => el.offsetParent !== null);
 
-            const focusable = Array.from(
-                form.querySelectorAll<HTMLElement>(
-                    `input:not([disabled]),
-           textarea:not([disabled]),
-           select:not([disabled]),
-           button:not([disabled]),
-           [tabindex]:not([tabindex="-1"])`
-                )
-            ).filter((el) => el.offsetParent !== null);
+        const index = focusable.indexOf(currentEl);
+        if (index === -1) return;
 
-            // detect react-select inner input
-            const current =
-                (e.target as HTMLElement)
-                    .closest(".rs__input")
-                    ?.querySelector("input") || (e.target as HTMLElement);
+        const nextIndex = backward ? index - 1 : index + 1;
+        const next = focusable[nextIndex];
+        if (!next) return;
 
-            const index = focusable.indexOf(current as HTMLElement);
-            if (index === -1) return;
+        // React Select
+        if (next.classList.contains(reactSelectClassName)) {
+            const input = next.querySelector("input") as HTMLInputElement | null;
+            input?.focus();
+            
+            return;
+        }
 
-            const nextIndex = e.shiftKey ? index - 1 : index + 1;
-            const next = focusable[nextIndex];
-            if (!next) return;
+        // Native Select
+        if (next instanceof HTMLSelectElement) {
+            next.focus();
+            return;
+        }
 
-            // react-select focus fix
-            if (next.classList.contains(reactSelectClassName)) {
-                (next.querySelector("input") as HTMLInputElement)?.focus();
-            } else {
-                next.focus();
-            }
-        },
-        [formRef, reactSelectClassName]
-    );
+        next.focus();
 
-    return { handleKeyDown };
+        if (
+            next instanceof HTMLInputElement ||
+            next instanceof HTMLTextAreaElement
+        ) {
+            requestAnimationFrame(() => {
+                next.setSelectionRange(0, next.value.length);
+            });
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key !== "Enter") return;
+
+          const target = e.target as HTMLElement;
+    const form = formRef.current;
+
+    if (!form) return;
+
+    const isSubmitButton =
+        target instanceof HTMLButtonElement &&
+        (target.type === "submit" || target.getAttribute("type") === "submit");
+
+    // ✅ If submit button is focused → allow normal submit
+    if (isSubmitButton) {
+        return;
+    }
+
+
+        e.preventDefault();
+
+        const current =     (e.target as HTMLElement)
+                .closest(".rs__input")
+                ?.querySelector("input") ||
+            (e.target as HTMLElement);
+
+        focusNext(current as HTMLElement, e.shiftKey);
+    };
+
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        focusNext(e.target as HTMLElement);
+    };
+
+    return { handleKeyDown, handleSelectChange };
 };

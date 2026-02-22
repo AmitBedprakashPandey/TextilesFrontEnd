@@ -17,62 +17,48 @@ const PHONE_REGEX = /^[6-9][0-9]{9}$/;
 export const vendorUpdateSchema = z.object({
   _id: z.string().optional(),
 
-  vendorCategory: z.string().min(1, "Vendor category is required"),
+  vendorCategory: z.string(),
 
-  companyname: z.string().min(2, "Company name is too short"),
-  ownername: z.string().min(2, "Owner name is required").optional(),
+  vendorname: z.string(),
+  ownername: z.string().optional(),
 
-  gstin: z
-    .string()
-    // .regex(GSTIN_REGEX, "Invalid GSTIN")
-    .optional(),
+  gstin: z.string().optional(),
 
-  pan: z
-    .string()
-    // .regex(PAN_REGEX, "Invalid PAN")
-    .optional(),
+  pan: z.string().optional(),
 
   phone: z
     .string()
-    // .regex(PHONE_REGEX, "Invalid phone number")
     .optional(),
 
-  mobile: z
-    .string()
-    // .regex(PHONE_REGEX, "Invalid mobile number")
-    ,
+  mobile: z.string(),
 
   email: z
     .string()
-    .email("Invalid email address")
     .optional(),
 
-  address: z.string().min(5, "Address is required"),
+  address: z.string(),
   address1: z.string().optional(),
 
-  state: z.string().min(1, "State is required"),
-  city: z.string().min(1, "City is required"),
+  state: z.string(),
+  city: z.string(),
 
   pincode: z
     .string()
-    .regex(PINCODE_REGEX, "Invalid pincode"),
-
+  ,
   bankname: z.string().optional(),
 
   accountno: z
     .string()
-    .min(9, "Invalid account number")
-    .max(18, "Invalid account number")
+
     .optional(),
 
   ifsc: z
     .string()
-    // .regex(IFSC_REGEX, "Invalid IFSC code")
     .optional(),
 
   branch: z.string().optional(),
 
-  gsttype: z.string().min(1, "GST type is required"),
+
 });
 
 export type VendorFormValues = z.infer<typeof vendorUpdateSchema>;

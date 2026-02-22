@@ -3,25 +3,21 @@ import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/tool
 
 export interface CompanyState {
     companyName: string;
-    ownerName: string;
+    ownerName?: string;
 
-    bankName?: string;
-    bankAccNo?: string;
-    ifsc?: string;
-    branch?: string;
 
     gstin?: string;
     pan?: string;
 
 
-    state: string;
-    city: string;
-    pincode: string;
+    state?: string;
+    city?: string;
+    pincode?: string;
 
     billingStreet1: string;
     billingStreet2?: string;
     billingStreet3?: string;
-    billingMobile: string;
+    billingMobile?: string;
     billingPhone?: string;
     billingEmail?: string;
 }
@@ -30,11 +26,7 @@ const companyStateProps: CompanyState = {
     companyName: '',
     ownerName: '',
 
-    bankName: '',
-    bankAccNo: '',
-    ifsc: '',
-    branch: '',
-
+    
     gstin: '',
     pan: '',
 
@@ -54,25 +46,21 @@ const companyStateProps: CompanyState = {
 export interface companyUpateState {
     _id: string,
     companyName: string;
-    ownerName: string;
+    ownerName?: string;
 
-    bankName?: string;
-    bankAccNo?: string;
-    ifsc?: string;
-    branch?: string;
-
+    
     gstin?: string;
     pan?: string;
 
 
-    state: string;
-    city: string;
-    pincode: string;
+    state?: string;
+    city?: string;
+    pincode?: string;
 
     billingStreet1: string;
     billingStreet2?: string;
     billingStreet3?: string;
-    billingMobile: string;
+    billingMobile?: string;
     billingPhone?: string;
     billingEmail?: string;
 
@@ -84,10 +72,7 @@ const companyUpateState: companyUpateState = {
     companyName: '',
     ownerName: '',
 
-    bankName: '',
-    bankAccNo: '',
-    ifsc: '',
-    branch: '',
+    
 
     gstin: '',
     pan: '',
@@ -128,8 +113,8 @@ export const fetchCompanys = createAsyncThunk('company/fetchCompanys', async (_,
     try {
         const response = await companyApi.getAll();
         return response as companyUpateState[];
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -138,8 +123,8 @@ export const createCompany = createAsyncThunk('company/createCompany', async (co
     try {
         const response = await companyApi.create(company);
         return response as companyUpateState;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -149,8 +134,8 @@ export const updateCompany = createAsyncThunk('company/updateCompany', async (co
         const response = await companyApi.update(company._id, company);
         return response as companyUpateState;
 
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -159,8 +144,8 @@ export const deleteCompany = createAsyncThunk('company/deleteCompany', async (id
     try {
         await companyApi.delete(id);
         return id;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -169,8 +154,8 @@ export const updateCurrentCompany = createAsyncThunk('company/updateCurrentCompa
     try {
         const response = await companyApi.update(company._id, company);
         return response as CompanyState;
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -194,6 +179,12 @@ export const counterSlice = createSlice({
         setCloseModel: (state) => {
             state.openModel = false;
         },
+        clearMessage: (state) => {
+            state.message = null;
+        },
+        clearError: (state) => {
+            state.error = null;
+        }
 
 
     },
@@ -210,6 +201,7 @@ export const counterSlice = createSlice({
             .addCase(fetchCompanys.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+
             })
             .addCase(createCompany.pending, (state) => {
                 state.loading = true;
@@ -218,6 +210,7 @@ export const counterSlice = createSlice({
             .addCase(createCompany.fulfilled, (state, action: PayloadAction<companyUpateState>) => {
                 state.loading = false;
                 state.company.push(action.payload);
+                state.message = "Created Successfully";
             })
             .addCase(createCompany.rejected, (state, action) => {
                 state.loading = false;
@@ -233,6 +226,7 @@ export const counterSlice = createSlice({
                 if (index !== -1) {
                     state.company[index] = action.payload;
                 }
+                state.message = "Updated Successfully";
             })
             .addCase(updateCompany.rejected, (state, action) => {
                 state.loading = false;
@@ -245,6 +239,7 @@ export const counterSlice = createSlice({
             .addCase(deleteCompany.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
                 state.company = state.company.filter(company => company._id !== action.payload);
+                state.message = "Deleted Successfully";
             })
             .addCase(deleteCompany.rejected, (state, action) => {
                 state.loading = false;
@@ -255,6 +250,6 @@ export const counterSlice = createSlice({
     }
 })
 
-export const { setCurrentCompany, clearCurrentCompany, setOpenModel, setCloseModel } = counterSlice.actions
+export const { setCurrentCompany, clearCurrentCompany, setOpenModel, setCloseModel, clearMessage, clearError } = counterSlice.actions
 
 export default counterSlice.reducer

@@ -8,17 +8,29 @@ import { Plus, RefreshCcw } from "lucide-react";
 import CustomDialog from "@/components/CustomDialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
-import { fetchUnit, setOpenModel, setCloseModel, clearCurrentUnit } from "../Redux/features/unitsSlices";
+import { fetchUnit, setOpenModel, setCloseModel, clearCurrentUnit, clearMessage, clearError} from "../Redux/features/unitsSlices";
 import { useEffect } from "react";
 import CustomLoading from "@/components/CustomLoading";
+import { toast } from "sonner";
 
 export default function UnitPage() {
-  const { openModel, loading } = useAppSelector((state) => state.unitSlice);
+  const { openModel, loading, message, error } = useAppSelector((state) => state.unitSlice);
   const dispatch = useAppDispatch();
 
   function refresh() {
     dispatch(fetchUnit())
   }
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+    if (message) {
+      toast.success(message);
+      dispatch(clearMessage());
+    }
+  }, [error, message]);
+
   useEffect(() => {
     dispatch(fetchUnit());
   }, [dispatch]);

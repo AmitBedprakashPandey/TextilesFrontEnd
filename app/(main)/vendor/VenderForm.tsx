@@ -10,100 +10,127 @@ import {
     FormLabel
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import Select from "react-select";
 import { Button } from "@/components/ui/button";
-
+import { stateData, vendorCategoryData } from "@/app/(main)/Redux/MockData";
 import { VendorFormValues, vendorUpdateSchema } from "./vendorSchema";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import { updateVendor, createVendor, setCloseModel, clearCurrentVendor } from "@/app/(main)/Redux/features/VendorSlice";
 import { fetchvendorCatagory } from "@/app/(main)/Redux/features/vendorCatagorySlice";
+import { useEnterNavigation } from "@/components/ReuseFunction";
 import { toast } from "sonner";
 import { RefreshCcw } from "lucide-react";
 
+interface SelectOption {
+    name: string;
+}
 export default function VendorForm() {
 
     const dispatch = useAppDispatch();
-    const { vendorCatagory } = useAppSelector((state) => state.vendorCategory);
     const { currentVendor, loading } = useAppSelector((state) => state.vendor);
 
-    useEffect(() => {
-        dispatch(fetchvendorCatagory());
-    }, [dispatch]);
+    const formRef = useRef<HTMLFormElement>(null);
+
+    const { handleKeyDown } = useEnterNavigation({ formRef, reactSelectClassName: "vendor-container" })
 
     const form = useForm<VendorFormValues>({
         resolver: zodResolver(vendorUpdateSchema),
     });
 
     const onSubmit = (data: VendorFormValues) => {
-        try {
-            if(currentVendor){
-                dispatch(updateVendor({...data,_id:currentVendor._id}))
-                 toast.success("Vendor Updated Successfully")
+            if (currentVendor) {
+                dispatch(updateVendor({ ...data, _id: currentVendor._id }))
                 dispatch(clearCurrentVendor())
                 dispatch(setCloseModel())
 
-            }else{
+            } else {
                 dispatch(createVendor(data))
-                toast.success("Vendor Created Successfully")
                 dispatch(setCloseModel())
                 dispatch(clearCurrentVendor())
             }
-        } catch (error) {
-            console.log(error)
-            toast.error("Something Went Wrong")
-            
-        }
 
     };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl + S (Windows/Linux) OR Cmd + S (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+                e.preventDefault();
+
+                form.handleSubmit(onSubmit)();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [form, onSubmit]);
+
+    useEffect(() => {
+        if (currentVendor) {
+            form.reset(currentVendor);
+        }
+    }, [currentVendor]);
 
     return (
         <Form {...form}>
             <form
+            ref={formRef}
+            onKeyDown={handleKeyDown}
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-3 p-6 rounded-xl relative"
             >
                 {/* Vendor Category */}
                 <FormField
-                    control={form.control}
-                    name="vendorCategory"
-
-                    render={({ field }) => (
-                        <FormItem className="max-w-sm">
-                            <FormLabel>Vendor Category *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultOpen>
+                            control={form.control}
+                            name="vendorCategory"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="capitalize">
+                                  Vendor Category *
+                                </FormLabel>
                                 <FormControl>
-                                    <SelectTrigger className="min-w-sm">
-                                        <SelectValue placeholder="Select Vendor Category" />
-                                    </SelectTrigger>
+                                  <Select<SelectOption>
+                                    tabIndex={0}
+                                    classNamePrefix={"react-select"}
+                                    value={vendorCategoryData.find(option => option.name === field.value) || null}
+                                    onChange={(val) => field.onChange(val?.name)}
+                                    options={vendorCategoryData}
+                                    getOptionValue={(opt) => opt.name}
+                                    getOptionLabel={(opt) => opt.name}
+                                    isSearchable={true}
+                                    isClearable={true}
+                                    autoFocus
+                                    placeholder="Select vendor category"
+                                    className="col-span-4"
+                                    theme={(theme) => ({
+                                      ...theme,
+                                      colors: {
+                                        ...theme.colors,
+                                        neutral0: "var(--background)",
+                                        neutral80: "var(--foreground)",
+                                        primary25: "var(--accent)",
+                                        primary: "var(--ring)",
+                                      },
+                                    })} />
+                
                                 </FormControl>
-                                <SelectContent>
-                                    {vendorCatagory.map((Item, index) => (
-                                        <SelectItem key={index} value={Item.name}>{Item.name}</SelectItem>
-                                    ))}
-
-                                </SelectContent>
-                            </Select>
-
-                        </FormItem>
-                    )}
-                />
+                              </FormItem>
+                            )}
+                          />
 
                 <Separator />
-                <div className="flex items-center gap-3">
+                <div className="grid grid-cols-2 gap-3">
                     <FormField
                         control={form.control}
-                        name="companyname"
+                        name="vendorname"
 
                         render={({ field }) => (
-                            <FormItem className="max-w-sm">
+                            <FormItem className="col-span-1">
                                 <FormLabel>Company Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field} />
@@ -127,6 +154,12 @@ export default function VendorForm() {
                             </FormItem>
                         )}
                     />
+
+
+                </div>
+
+                <Separator />
+                <div className="grid grid-cols-2 gap-3">
                     <FormField
                         control={form.control}
                         name="gstin"
@@ -135,7 +168,10 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>GST</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} onChange={(e)=>{
+                                            field.onChange(e.target.value.slice(0, 15));
+                                            
+                                    }}/>
                                 </FormControl>
 
                             </FormItem>
@@ -150,13 +186,14 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>PAN</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} 
+                                    onChange={(e)=>field.onChange(e.target.value.slice(0,10))}
+                                    />
                                 </FormControl>
 
                             </FormItem>
                         )}
                     />
-
                 </div>
 
                 <Separator />
@@ -201,42 +238,29 @@ export default function VendorForm() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>State *</FormLabel>
-                                <FormControl>                                    
-                                    <Select {...field} onValueChange={(e)=>form.setValue("state" ,e)}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select State" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
-                                            <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
-                                            <SelectItem value="Assam">Assam</SelectItem>
-                                            <SelectItem value="Bihar">Bihar</SelectItem>
-                                            <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
-                                            <SelectItem value="Goa">Goa</SelectItem>
-                                            <SelectItem value="Gujarat">Gujarat</SelectItem>
-                                            <SelectItem value="Haryana">Haryana</SelectItem>
-                                            <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
-                                            <SelectItem value="Jharkhand">Jharkhand</SelectItem>
-                                            <SelectItem value="Karnataka">Karnataka</SelectItem>
-                                            <SelectItem value="Kerala">Kerala</SelectItem>
-                                            <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
-                                            <SelectItem value="Maharashtra">Maharashtra</SelectItem>
-                                            <SelectItem value="Manipur">Manipur</SelectItem>
-                                            <SelectItem value="Meghalaya">Meghalaya</SelectItem>
-                                            <SelectItem value="Mizoram">Mizoram</SelectItem>
-                                            <SelectItem value="Nagaland">Nagaland</SelectItem>
-                                            <SelectItem value="Odisha">Odisha</SelectItem>
-                                            <SelectItem value="Punjab">Punjab</SelectItem>
-                                            <SelectItem value="Rajasthan">Rajasthan</SelectItem>
-                                            <SelectItem value="Sikkim">Sikkim</SelectItem>
-                                            <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
-                                            <SelectItem value="Telangana">Telangana</SelectItem>
-                                            <SelectItem value="Tripura">Tripura</SelectItem>
-                                            <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
-                                            <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
-                                            <SelectItem value="West Bengal">West Bengal</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <FormControl>
+                                    <Select<SelectOption>
+                                        options={stateData}
+                                        getOptionLabel={(option) => option.name}
+                                        getOptionValue={(option) => option.name}
+                                        onChange={(option) => form.setValue("state", option ? option.name : "")}
+                                        value={stateData.find(option => option.name === field.value) || null}
+                                        isSearchable={true}
+                                        isClearable={true}
+                                        placeholder="Select state"
+                                        className="col-span-4"
+                                        theme={(theme) => ({
+                                            ...theme,
+                                            colors: {
+                                                ...theme.colors,
+                                                neutral0: "var(--background)",
+                                                neutral80: "var(--foreground)",
+                                                primary25: "var(--accent)",
+                                                primary: "var(--ring)",
+                                            },
+                                        })}
+
+                                    />
                                 </FormControl>
                             </FormItem>
                         )}
@@ -263,7 +287,10 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>Pin Code *</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} 
+                                    
+                                    onChange={(e)=>field.onChange(e.target.value.slice(0,6))}
+                                    />
                                 </FormControl>
 
                             </FormItem>
@@ -284,7 +311,12 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>Mobile No. *</FormLabel>
                                 <FormControl>
-                                    <Input inputMode="numeric" {...field} />
+                                    <Input inputMode="numeric" {...field} 
+                                    onChange={(e)=>{
+                                        const val = e.target.value.replace(/[^0-9]/g,"")
+                                        field.onChange(val.slice(0,10))
+                                    }}
+                                    />
                                 </FormControl>
 
                             </FormItem>
@@ -298,7 +330,12 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>Phone No.</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input inputMode="numeric" {...field} 
+                                    onChange={(e)=>{
+                                        const val = e.target.value.replace(/[^0-9]/g,"")
+                                        field.onChange(val.slice(0,10))
+                                    }}
+                                    />
                                 </FormControl>
 
                             </FormItem>
@@ -343,7 +380,12 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>Account No.</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} 
+                                    onChange={(e)=>{
+                                        const val = e.target.value.replace(/^[0-9]/g,"")
+                                        field.onChange(val.slice(0,18))
+                                    }}
+                                    />
                                 </FormControl>
                             </FormItem>
                         )} />
@@ -354,7 +396,12 @@ export default function VendorForm() {
                             <FormItem className="max-w-sm">
                                 <FormLabel>IFSC Code</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field}
+                                    onChange={(e)=>{
+                                        
+                                        field.onChange(e.target.value.slice(0,11))
+                                    }}
+                                    />
                                 </FormControl>
                             </FormItem>
                         )} />
@@ -374,35 +421,10 @@ export default function VendorForm() {
                 </div>
                 <Separator />
 
-                <div>
-                    <FormField
-                        control={form.control}
-                        name="gsttype"
-                        render={({ field }) => (
-                            <FormItem className="max-w-sm">
-                                <FormLabel>GST Type</FormLabel>
-                                <FormControl>
-                                <Select {...field} onValueChange={(e)=>form.setValue("gsttype" ,e)}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select GST Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="CGST/SGST">CGST/SGST</SelectItem>
-                                            <SelectItem value="IGST">IGST</SelectItem>
-                                            <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-
-                </div>
-
 
                 <div className="flex justify-end">
                     <Button type="submit" variant="default" disabled={loading}>
-                        {loading && <div className="animate-spin h-5 w-5 mr-2"><RefreshCcw/></div>}{currentVendor ? "UPDATE" : "SAVE"}
+                        {loading && <div className="animate-spin h-5 w-5 mr-2"><RefreshCcw /></div>}{currentVendor ? "UPDATE" : "SAVE"}
                     </Button>
                 </div>
             </form>

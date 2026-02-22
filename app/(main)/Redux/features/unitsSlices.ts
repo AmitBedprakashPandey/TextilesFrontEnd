@@ -45,8 +45,8 @@ export const fetchUnit = createAsyncThunk('unit/fetchUnit', async (_, { rejectWi
     try {
         const response = await unitApi.getAll();
         return response as unitUpdateState[];
-    } catch (error) {
-        return rejectWithValue(error)
+    } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -55,8 +55,8 @@ export const createUnit = createAsyncThunk('unit/createUnit', async (unit: unitS
     try {
         const response = await unitApi.create(unit);
         return response as unitUpdateState;
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -66,8 +66,8 @@ export const updateUnit = createAsyncThunk('unit/updateUnit', async (unit: unitU
         const response = await unitApi.update(unit._id, unit);
         return response as unitUpdateState;
 
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -76,8 +76,8 @@ export const deleteUnit = createAsyncThunk('unit/deleteUnit', async (id: string,
     try {
         await unitApi.delete(id);
         return id;
-    } catch (error) {
-        return rejectWithValue(error)
+   } catch (error: any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
     }
 }
 )
@@ -102,7 +102,12 @@ export const counterSlice = createSlice({
         setCloseModel: (state) => {
             state.openModel = false;
         },
-
+        clearMessage: (state) => {
+            state.message = null;
+        },
+        clearError: (state) => {
+            state.error = null;
+        }
 
     },
     extraReducers: (builder) => {
@@ -126,6 +131,7 @@ export const counterSlice = createSlice({
             .addCase(createUnit.fulfilled, (state, action: PayloadAction<unitUpdateState>) => {
                 state.loading = false;
                 state.unit.push(action.payload);
+                state.message = "Created Successfully";
             })
             .addCase(createUnit.rejected, (state, action) => {
                 state.loading = false;
@@ -141,6 +147,7 @@ export const counterSlice = createSlice({
                 if (index !== -1) {
                     state.unit[index] = action.payload;
                 }
+                state.message = "Updated Successfully";
             })
             .addCase(updateUnit.rejected, (state, action) => {
                 state.loading = false;
@@ -153,6 +160,7 @@ export const counterSlice = createSlice({
             .addCase(deleteUnit.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
                 state.unit = state.unit.filter(unit => unit._id !== action.payload);
+                state.message = "Deleted Successfully";
             })
             .addCase(deleteUnit.rejected, (state, action) => {
                 state.loading = false;
@@ -163,6 +171,6 @@ export const counterSlice = createSlice({
     }
 })
 
-export const { SetCurrentUnit, clearCurrentUnit, setOpenModel, setCloseModel } = counterSlice.actions
+export const { SetCurrentUnit, clearCurrentUnit, setOpenModel, setCloseModel, clearMessage, clearError} = counterSlice.actions
 
 export default counterSlice.reducer
