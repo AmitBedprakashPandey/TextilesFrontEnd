@@ -230,7 +230,7 @@ export default function Page() {
         //     grandTotalThaans: 0,
         // });
 
-        useNewtabOpener("http://localhost:3000/print")
+        // useNewtabOpener("http://localhost:3000/print")
 
         setMeters(
             Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
