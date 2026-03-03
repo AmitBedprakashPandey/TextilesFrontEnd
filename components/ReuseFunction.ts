@@ -12,8 +12,10 @@ interface FocusNextOptions {
     name: string
 }
 
-export const useNewtabOpener = (url: string) => {
-  window.open(url,"_blank");
+export const openInNewTab = (url: string) => {
+  if (typeof window !== "undefined") {
+    window.open(url, "_blank");
+  }
 }
 
 export const focusNext = (nextRef?: React.RefObject<HTMLInputElement | HTMLButtonElement | null>) =>

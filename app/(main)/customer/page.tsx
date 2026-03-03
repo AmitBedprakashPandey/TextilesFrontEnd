@@ -18,7 +18,8 @@ import { useAppDispatch, useAppSelector } from "../Redux/hooks"
 import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice"
 import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice"
 import { setOpenModel, setCloseModel, updateFabricCustomer, createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer } from "@/app/(main)/Redux/features/CustomerFabricSlice"
-import { useNewtabOpener } from "@/components/ReuseFunction"
+import {openInNewTab} from "@/components/ReuseFunction"
+
 
 type OptionType = {
     value: string
@@ -230,13 +231,16 @@ export default function Page() {
         //     grandTotalThaans: 0,
         // });
 
+        openInNewTab("http://localhost:3000/print")
         // useNewtabOpener("http://localhost:3000/print")
 
         setMeters(
             Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
         );
-        alert("Data submitted! Check console.")
         // You can replace console.log with a POST request to your backend
+        if (typeof window !== "undefined") {
+            window.open("http://localhost:3000/print", "_blank")
+        }
     }
 
     const { setValue } = form
@@ -256,7 +260,7 @@ export default function Page() {
 
         window.addEventListener("keydown", handleCtrlS);
         return () => window.removeEventListener("keydown", handleCtrlS);
-    }, [open, submitForm]);
+    }, [openModel, submitForm]);
 
 
     // calculate total meters/ thans
