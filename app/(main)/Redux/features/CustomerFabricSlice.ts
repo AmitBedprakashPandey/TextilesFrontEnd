@@ -1,129 +1,190 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { set } from 'zod'
-
-interface items {
-    itemName: string
-    pcs: string
-    avgMtrs: string
-    rate: string
-    date: string
-    totalMtrs: string
-    totalAmt: string
-}
-
-interface Payment {
-    date: string,
-    paymentType: string,
-    amount: string,
-    recipt?: string,
-    paidby: string
+import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { fabricCustomerApi } from "@/lib/api/services";
+import { de } from 'zod/v4/locales';
+interface IMeterGroup {
+    groupNo: number;
+    pattern: string | null;
+    rate: number;
+    meters: number[];
+    totalMeters: number;
+    thaans: number;
 }
 
 interface CustomerFabricState {
-    fabric: items[],
-    payment: Payment[],
-    grandMeters: number,
-    grandAmount: number,
-    diffMeters: number,
-    pendingAmount: number
-    narration: string,
+    company: string,
+    vendor: string,
+    date: string,
+    grandTotalMeters: number,
+    grandTotalThaans: number,
+    groups: IMeterGroup[]
 }
+
+interface CustomerFabricUpdateState {
+    _id: string,
+    company: string,
+    vendor: string,
+    date: string,
+    grandTotalMeters: number,
+    grandTotalThaans: number,
+    groups: IMeterGroup[]
+}
+
 interface initProps {
-    fabricStatus: CustomerFabricState,
+    fabricStatus: CustomerFabricUpdateState[],
     loading: boolean,
     error: string | null
     message: string | null
-    openPayment: boolean, openFabric: boolean
-    localStorage: CustomerFabricState | null
+    localStorage: CustomerFabricState | null,
+    currentFabricCustomer: CustomerFabricUpdateState | null,
+    openModel: boolean
 }
 
-const CustomerFabricState: CustomerFabricState = {
-    fabric: [],
-    payment: [],
-    grandMeters: 0,
-    grandAmount: 0,
-    diffMeters: 0,
-    pendingAmount: 0,
-    narration: ''
+const CustomerFabricState: CustomerFabricUpdateState = {
+    _id: '',
+    company: '',
+    vendor: '',
+    date: '',
+    grandTotalMeters: 0,
+    grandTotalThaans: 0,
+    groups: []
 }
 
 const initialState: initProps = {
-    fabricStatus: CustomerFabricState,
+    fabricStatus: [],
     loading: false,
     error: null,
     message: null,
-    openPayment: false,
-    openFabric: false,
-    localStorage: null
+    localStorage: null,
+    currentFabricCustomer: null
+    ,openModel: false
 }
+
+
+export const fetchFabricCustomer = createAsyncThunk('fabricCustomer/fetchFabricCustomers', async (_, { rejectWithValue }) => {
+    try {
+        const response = await fabricCustomerApi.getAll();
+        return response as CustomerFabricUpdateState[];
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
+    }
+}
+)
+
+export const createFabricCustomer = createAsyncThunk('fabricCustomer/createFabricCustomer', async (fabricCustomer: CustomerFabricState, { rejectWithValue }) => {
+    try {
+        const response = await fabricCustomerApi.create(fabricCustomer);
+        return response as CustomerFabricUpdateState;
+    } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
+    }
+}
+)
+
+export const updateFabricCustomer = createAsyncThunk('fabricCustomer/updateFabricCustomer', async (fabricCustomer: CustomerFabricUpdateState, { rejectWithValue }) => {
+    try {
+        const response = await fabricCustomerApi.update(fabricCustomer._id, fabricCustomer);
+        return response as CustomerFabricUpdateState;
+
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
+    }
+}
+)
+
+export const deleteFabricCustomer = createAsyncThunk('fabricCustomer/deleteFabricCustomer', async (id: string, { rejectWithValue }) => {
+    try {
+        await fabricCustomerApi.delete(id);
+        return id;
+   } catch (error:any) {
+        return rejectWithValue(error?.response?.data?.message || "Something went wrong")
+    }
+}
+)
 
 
 
 export const CustomerFabricSlice = createSlice({
     name: 'CustomerFabric',
     initialState,
-
     reducers: {
-        addFabric: (state, action: PayloadAction<items>) => {
-            state.fabricStatus.fabric.push(action.payload);
+        setCurrentFabricCustomer: (state, action: PayloadAction<CustomerFabricUpdateState | null>) => {
+            state.currentFabricCustomer = action.payload;
         },
-        addPayment: (state, action: PayloadAction<Payment>) => {
-            state.fabricStatus.payment.push(action.payload);
+        clearCurrentFabricCustomer: (state) => {
+            state.currentFabricCustomer = null;
+        },      
+         clearNotification: (state) => {
+            state.message = null;
+            state.error = null;
         },
-        addPaymentToFabric: (state, action: PayloadAction<Payment>) => {
-            state.fabricStatus.payment.push(action.payload);
+        setOpenModel: (state, action: PayloadAction<boolean>) => {
+            state.openModel = action.payload;
         },
-        clearFabric: (state) => {
-            state.fabricStatus.fabric = [];
+        setCloseModel: (state) => {
+            state.openModel = false;
         },
-        clearPayment: (state) => {
-            state.fabricStatus.payment = [];
-        },
-        deleteFabric: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.fabric.splice(action.payload, 1);
-        },
-        deletePayment: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.payment.splice(action.payload, 1);
-        },
-        updateFabric: (state, action: PayloadAction<{ index: number, item: items }>) => {
-            state.fabricStatus.fabric[action.payload.index] = action.payload.item;
-        },
-        updatePayment: (state, action: PayloadAction<{ index: number, item: Payment }>) => {
-            state.fabricStatus.payment[action.payload.index] = action.payload.item;
-        },
-        addGrandTotal: (state, action: PayloadAction<{ grandMeters: number, grandAmount: number }>) => {
-            state.fabricStatus.grandMeters = action.payload.grandMeters;
-            state.fabricStatus.grandAmount = action.payload.grandAmount;
-            console.log(action.payload);
-        },
-        addDiffMeters: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.diffMeters = action.payload;
-        },
-        addPendingAmount: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.pendingAmount = (state.fabricStatus.grandAmount - action.payload);
-        },
-        addNarration: (state, action: PayloadAction<string>) => {
-            state.fabricStatus.narration = action.payload;
-        },
-        addGrandAmt: (state, action: PayloadAction<number>) => {
-            state.fabricStatus.grandAmount += action.payload;
-        },
-        setOpenPayment: (state, action: PayloadAction<boolean>) => { state.openPayment = action.payload; },
-        setOpenFabric: (state, action: PayloadAction<boolean>) => { state.openFabric = action.payload; },
-
-        setLocalStorage: (state, action: PayloadAction<CustomerFabricState>) => {
-            state.localStorage = action.payload;
-        },
-        clearLocalStorage: (state) => {
-            state.localStorage = null;
-        }
-
+        
+        
     },
     extraReducers: (builder) => {
         builder
+        .addCase(fetchFabricCustomer.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchFabricCustomer.fulfilled, (state, action: PayloadAction<CustomerFabricUpdateState[]>) => {
+            state.loading = false;
+            state.fabricStatus = action.payload;
+        })
+        .addCase(fetchFabricCustomer.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        })
+        .addCase(createFabricCustomer.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(createFabricCustomer.fulfilled, (state, action: PayloadAction<CustomerFabricUpdateState>) => {
+            state.loading = false;
+            state.message = "Created Successfully";
+            state.fabricStatus.push(action.payload);    
+        })
+        .addCase(createFabricCustomer.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload as string;
+        })  
+        .addCase(updateFabricCustomer.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updateFabricCustomer.fulfilled,(state,action: PayloadAction<CustomerFabricUpdateState>)=>{
+            state.loading = false;
+            const index = state.fabricStatus.findIndex(fabricCustomer => fabricCustomer._id === action.payload._id);
+            if (index !== -1) {
+                state.fabricStatus[index] = action.payload;
+            }
+            state.message = "Updated Successfully";
+        })
+        .addCase(updateFabricCustomer.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload as string;
+        })
+        .addCase(deleteFabricCustomer.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(deleteFabricCustomer.fulfilled,(state,action: PayloadAction<string>)=>{
+            state.loading = false;
+            state.fabricStatus = state.fabricStatus.filter(fabricCustomer => fabricCustomer._id !== action.payload);
+            state.message = "Deleted Successfully";
+        })
+        .addCase(deleteFabricCustomer.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload as string;
+        })
     }
 })
 
+export const { setCurrentFabricCustomer, clearCurrentFabricCustomer, clearNotification, setOpenModel, setCloseModel} = CustomerFabricSlice.actions
 
-export const { addGrandTotal, addDiffMeters, setLocalStorage, clearLocalStorage,addPendingAmount, addNarration, addGrandAmt, deleteFabric, deletePayment, updateFabric, updatePayment, addFabric, addPayment, clearFabric, clearPayment, setOpenPayment, setOpenFabric } = CustomerFabricSlice.actions
 export default CustomerFabricSlice.reducer

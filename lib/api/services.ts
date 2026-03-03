@@ -87,3 +87,11 @@ export const companyApi = {
     update: (id: string, data: any) => ApiService.update(API_ENDPOINTS.COMPANY.UPDATE(id), data),
     delete: (id: string) => ApiService.delete(API_ENDPOINTS.COMPANY.DELETE(id)),
 }
+
+export const fabricCustomerApi = {
+    getAll: () => ApiService.getAll(API_ENDPOINTS.fabricCustomer.GET_ALL),
+    getById: (id: string) => ApiService.getById(API_ENDPOINTS.fabricCustomer.GET_BY_ID(id)),
+    create: (data: any) => ApiService.create(API_ENDPOINTS.fabricCustomer.CREATE, data),
+    update: (id: string, data: any) => ApiService.update(API_ENDPOINTS.fabricCustomer.UPDATE(id), data),
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.fabricCustomer.DELETE(id)),
+}

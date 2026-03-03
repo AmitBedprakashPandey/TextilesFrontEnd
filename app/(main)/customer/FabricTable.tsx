@@ -1,23 +1,43 @@
+"use client"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, Printer, Receipt, Trash } from "lucide-react";
-import { Card, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks";
+import { toast } from "sonner";
+import { fetchFabricCustomer,deleteFabricCustomer, clearNotification,setOpenModel,setCloseModel,setCurrentFabricCustomer,clearCurrentFabricCustomer } from "../Redux/features/CustomerFabricSlice";
+import CustomLoading from "@/components/CustomLoading";
+
+
+
 
 export default function FabricTable() {
+    const [open, setOpen] = useState({_id:"",open:false});
+    const dispatch=useAppDispatch();
+   const {fabricStatus,loading , error,message} = useAppSelector(state=>state.CustomerFabric) 
+
+    const handleDelete = () => {
+        if(open._id){
+            dispatch(deleteFabricCustomer(open._id)).unwrap();
+            setOpen({_id:"",open:false});
+            
+        }
+    }
+
+
+  
+
+
+
+        
+
+
+
+
     return (<>
         <div className="w-[70vw] p-2 border-b">
             <div className="px-3 flex items-center gap-10">
@@ -50,39 +70,28 @@ export default function FabricTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow>
-                        <TableCell className="font-medium">1</TableCell>
+                    {fabricStatus.map((item) => (
+                        <TableRow>
+                        <TableCell className="font-medium">{item._id}</TableCell>
                         <TableCell>110</TableCell>
-                        <TableCell>Sheetal</TableCell>
-                        <TableCell>Mujeeb</TableCell>
-                        <TableCell>23/07/2025</TableCell>
-                        <TableCell>1262.20</TableCell>
-                        <TableCell>60</TableCell>
+                        <TableCell>{item.company}</TableCell>
+                        <TableCell>{item.vendor}</TableCell>
+                        <TableCell>{item.date}</TableCell>
+                        <TableCell>{item.grandTotalMeters}</TableCell>
+                        <TableCell>{item.grandTotalThaans}</TableCell>
                         <TableCell className="flex justify-center items-center gap-2">
-                            <Button type="button" ><Edit /></Button>
+                            <Button type="button" onClick={()=>{dispatch(setCurrentFabricCustomer(item));dispatch(setCloseModel())}} ><Edit /></Button>
                             <Button type="button" ><Printer/></Button>
                             <Button type="button" ><Receipt /></Button>
-                            <AlertDialog>
-                                <AlertDialogTrigger><Trash /></AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your account
-                                            and remove your data from our servers.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction>Continue</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <Button type="button" variant={"destructive"} onClick={()=>setOpen({_id:item._id,open:true})}><Trash/></Button>
                         </TableCell>
                     </TableRow>
+                    ))}
                 </TableBody>
             </Table>
         </div>
+        <CustomeCofirmDailog close={()=>setOpen({_id:"",open:false})} confirm={handleDelete } open={open.open} lable="Delete"/>
+            {loading && <CustomLoading />}
     </>
     )
 }

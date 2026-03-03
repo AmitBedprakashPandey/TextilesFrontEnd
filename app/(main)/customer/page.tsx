@@ -1,25 +1,25 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react"
+import { useState, useRef, useEffect, use } from "react"
 import { Input } from "@/components/ui/input"
 import Select from 'react-select'
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { error, log } from "console"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { X } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import FabricTable from "./FabricTable"
 import CustomDialog from "@/components/CustomDialog"
-import { useAppSelector } from "../Redux/hooks"
-import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice";
-import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks"
+import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice"
+import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice"
+import { setOpenModel, setCloseModel,updateFabricCustomer,createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer } from "@/app/(main)/Redux/features/CustomerFabricSlice";
+import { useNewtabOpener } from "@/components/ReuseFunction"
+import { clear } from "console"
 
 type OptionType = {
     value: string
@@ -41,8 +41,8 @@ const formSchema = z.object({
     date: z.string().min(1),
     groups: z.array(z.object({
         groupNo: z.number().min(1),
-        pattern: z.string().nullable().optional(),
-        rate: z.number().min(0),
+        pattern: z.string().nullable(),
+        rate: z.number(),
         meters: z.array(z.number().min(0)),
         totalMeters: z.number().min(0),
         thaans: z.number().min(0),
@@ -65,16 +65,35 @@ const formSchema = z.object({
 });
 
 export default function Page() {
-    const [open, setOpen] = useState<boolean>(false);
 
-    const {company} = useAppSelector(state => state.company)
-const {vendorList} = useAppSelector(state => state.vendor)
+    const { company } = useAppSelector(state => state.company)
+    const { vendorList } = useAppSelector(state => state.vendor)
+    const {openModel,currentFabricCustomer,error,message} = useAppSelector(state => state.CustomerFabric)
+    const dispatch = useAppDispatch();
+    
+      useEffect(() => {
+        if(error){
+            toast.error(error)
+        }
+        if(message){
+            toast.success(message)
+        }
+
+        dispatch(clearNotification())
+    
+            dispatch(fetchFabricCustomer())
+
+    }, [error,message,dispatch])
+
 
     const [meters, setMeters] = useState<number[][]>(
         Array.from({ length: METER_GROUPS }, () =>
             Array(TOTAL_INPUTS).fill(0)
         )
     )
+
+
+
     // one ref per input (stable)
 
     const handleChange = (
@@ -116,6 +135,52 @@ const {vendorList} = useAppSelector(state => state.vendor)
         }
     });
 
+   useEffect(() => {
+    if (!currentFabricCustomer) return
+
+    // ✅ Always build 3 groups
+    const rebuiltMeters = Array.from({ length: METER_GROUPS }, (_, index) => {
+        const existingGroup = currentFabricCustomer.groups[index]
+
+        const arr = Array(TOTAL_INPUTS).fill(0)
+
+        if (existingGroup?.meters) {
+            existingGroup.meters.forEach((val, i) => {
+                arr[i] = val
+            })
+        }
+
+        return arr
+    })
+
+    setMeters(rebuiltMeters)
+
+    form.reset({
+        company: currentFabricCustomer.company,
+        vendor: currentFabricCustomer.vendor,
+        date: new Date(currentFabricCustomer.date)
+            .toISOString()
+            .split("T")[0],
+
+        groups: Array.from({ length: METER_GROUPS }, (_, index) => {
+            const existingGroup = currentFabricCustomer.groups[index]
+
+            return {
+                groupNo: index + 1,
+                pattern: existingGroup?.pattern ?? "",
+                rate: existingGroup?.rate ?? 0,
+                meters: rebuiltMeters[index],
+                totalMeters: existingGroup?.totalMeters ?? 0,
+                thaans: existingGroup?.thaans ?? 0,
+            }
+        }),
+
+        grandTotalMeters: currentFabricCustomer.grandTotalMeters,
+        grandTotalThaans: currentFabricCustomer.grandTotalThaans,
+    })
+
+}, [currentFabricCustomer])
+
 
     const onSubmit = (data: z.infer<typeof formSchema>) => {
         const filteredGroups = data.groups
@@ -135,24 +200,38 @@ const {vendorList} = useAppSelector(state => state.vendor)
             groups: filteredGroups,
         };
 
+        const {company,vendor,date,groups,grandTotalMeters,grandTotalThaans} = data
+
 
         console.log(finalPayload);
+        if(currentFabricCustomer){
+            dispatch(updateFabricCustomer({...finalPayload,_id:currentFabricCustomer._id}))
+            resetForm()
+        }else{
+            dispatch(createFabricCustomer(finalPayload))
+            resetForm()
+        }
+
+        
+
         // ✅ RESET FORM AND METERS
-        form.reset({
-            company: "",
-            vendor: "",
-            date: new Date().toISOString().split("T")[0],
-            groups: Array.from({ length: METER_GROUPS }, () => ({
-                groupNo: 1,
-                pattern: "",
-                rate: 0,
-                meters: Array(TOTAL_INPUTS).fill(0),
-                totalMeters: 0,
-                thaans: 0,
-            })),
-            grandTotalMeters: 0,
-            grandTotalThaans: 0,
-        });
+        // form.reset({
+        //     company: "",
+        //     vendor: "",
+        //     date: new Date().toISOString().split("T")[0],
+        //     groups: Array.from({ length: METER_GROUPS }, () => ({
+        //         groupNo: 1,
+        //         pattern: "",
+        //         rate: 0,
+        //         meters: Array(TOTAL_INPUTS).fill(0),
+        //         totalMeters: 0,
+        //         thaans: 0,
+        //     })),
+        //     grandTotalMeters: 0,
+        //     grandTotalThaans: 0,
+        // });
+
+        useNewtabOpener("http://localhost:3000/print")
 
         setMeters(
             Array.from({ length: METER_GROUPS }, () => Array(TOTAL_INPUTS).fill(0))
@@ -165,19 +244,20 @@ const {vendorList} = useAppSelector(state => state.vendor)
 
     const submitForm = form.handleSubmit(onSubmit, (error) => { toast.warning(error.groups?.root?.message) });
 
- useEffect(() => {
-     const handleCtrlS = (e: KeyboardEvent) => {
-         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-             
-             e.preventDefault(); // only prevent when Ctrl+S
-             if (open) return; // 🚫 Don't submit if dialog open
-            submitForm();
-        }
-    };
+    useEffect(() => {
+        const handleCtrlS = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
 
-    window.addEventListener("keydown", handleCtrlS);
-    return () => window.removeEventListener("keydown", handleCtrlS);
-}, [open, submitForm]);
+                e.preventDefault(); // only prevent when Ctrl+S
+                if (openModel) return; // 🚫 Don't submit if dialog open
+                submitForm();
+                resetForm();
+            }
+        };
+
+        window.addEventListener("keydown", handleCtrlS);
+        return () => window.removeEventListener("keydown", handleCtrlS);
+    }, [open, submitForm]);
 
 
     // calculate total meters/ thans
@@ -257,13 +337,43 @@ const {vendorList} = useAppSelector(state => state.vendor)
         }
     };
 
-    
 
+    const resetForm = () => {
+    // 1️⃣ Reset meters grid state
+    const emptyMeters = Array.from(
+        { length: METER_GROUPS },
+        () => Array(TOTAL_INPUTS).fill(0)
+    )
+
+    setMeters(emptyMeters)
+
+    // 2️⃣ Reset react-hook-form
+    form.reset({
+        company: "",
+        vendor: "",
+        date: new Date().toISOString().split("T")[0],
+        groups: Array.from({ length: METER_GROUPS }, (_, index) => ({
+            groupNo: index + 1,
+            pattern: "",
+            rate: 0,
+            meters: Array(TOTAL_INPUTS).fill(0),
+            totalMeters: 0,
+            thaans: 0,
+        })),
+        grandTotalMeters: 0,
+        grandTotalThaans: 0,
+    })
+
+    // 3️⃣ Clear redux edit state
+    dispatch(clearCurrentFabricCustomer())
+}
     return (
         <div className="">
             <div className="flex justify-between items-center">
                 <Label>Customer Fabric Entry</Label>
-                <Button type="button" onClick={() => setOpen(true)} className="cursor-pointer">Fabric Entry List</Button>
+                {currentFabricCustomer ? <Button type="button" onClick={resetForm}>Cancel</Button>
+            :    <Button type="button" onClick={() => dispatch(setOpenModel(true))} className="cursor-pointer">Fabric Entry List</Button>
+            }
             </div>
 
             <Form  {...form}>
@@ -421,7 +531,7 @@ const {vendorList} = useAppSelector(state => state.vendor)
                                                     <FormItem>
                                                         <FormLabel>Rate</FormLabel>
                                                         <FormControl>
-                                                            <Input onFocus={e => e.target.select()} type="number" {...field} onChange={(e) => form.setValue(`groups.${groupIndex}.rate`, Number(e.target.value) || 0)} />
+                                                            <Input onFocus={e => e.target.select()} type="number" {...field} onChange={(e) => form.setValue(`groups.${groupIndex}.rate`, Number(e.target.value))} />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}
@@ -481,13 +591,17 @@ const {vendorList} = useAppSelector(state => state.vendor)
                         </div>
                         <Separator />
                         <div className="w-full flex justify-end py-5">
+                            {currentFabricCustomer?._id ?
+                        <Button type="submit" className="col-span-full w-56">Update</Button>
+                        :    
                             <Button type="submit" className="col-span-full w-56">Submit</Button>
+                        }
                         </div>
                     </div>
                 </form>
             </Form>
 
-            <CustomDialog open={open} close={() => setOpen(false)} title="Fabric Customer Entry List" children={<FabricTable />} />
+            <CustomDialog open={openModel} close={() => dispatch(setCloseModel())} title="Fabric Customer Entry List" children={<FabricTable />} />
 
 
 

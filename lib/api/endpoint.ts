@@ -50,5 +50,11 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/company/${id}`,
     DELETE: (id: string) => `/company/${id}`,
     },
-
+    fabricCustomer:{
+      GET_ALL: "/fabriccustomer",
+      GET_BY_ID: (id: string) => `/fabriccustomer/${id}`,
+      CREATE: "/fabriccustomer",
+      UPDATE: (id: string) => `/fabriccustomer/${id}`,
+      DELETE: (id: string) => `/fabriccustomer/${id}`,
+    }
 }

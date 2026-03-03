@@ -7,7 +7,7 @@ import vendorCategorySlice from "./features/vendorCatagorySlice";
 import vendorSlice from "./features/VendorSlice";
 import CompanySlice from "./features/CompanySlice";
 import TailorFabricSlice from "./features/TailorFabricSlice";
-
+import CustomerFabricSlice from "./features/CustomerFabricSlice";
 
 export const store = configureStore({
     reducer: {
@@ -17,8 +17,9 @@ export const store = configureStore({
         City: citySlice,
         vendor: vendorSlice,
         vendorCategory: vendorCategorySlice,
-        company : CompanySlice,
-TailorFabric : TailorFabricSlice
+        company: CompanySlice,
+        TailorFabric: TailorFabricSlice,
+        CustomerFabric : CustomerFabricSlice
     }
 })
 
