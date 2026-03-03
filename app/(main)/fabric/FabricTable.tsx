@@ -23,7 +23,7 @@ import PaymentForm from "./PaymentForm";
 import { useAppSelector,useAppDispatch } from "../Redux/hooks";
 import CustomDialog from "@/components/CustomDialog";
 import { setOpenFabric,setOpenPayment } from "@/app/(main)/Redux/features/TailorFabricSlice";
-import { useNewtabOpener } from "@/components/ReuseFunction";
+import { openInNewTab } from "@/components/ReuseFunction";
 import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
 
 export default function FabricTable() {
@@ -32,7 +32,7 @@ const dispatch = useAppDispatch()
     const { fabricStatus,openFabric,openPayment } = useAppSelector((state) => state.TailorFabric)
 
     const printPaper = () => {
-        useNewtabOpener("print");
+        openInNewTab("print");
     }
 
     const handleDelete = (id: string) => {
