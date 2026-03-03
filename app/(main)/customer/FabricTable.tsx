@@ -18,7 +18,7 @@ import CustomLoading from "@/components/CustomLoading";
 export default function FabricTable() {
     const [open, setOpen] = useState({_id:"",open:false});
     const dispatch=useAppDispatch();
-   const {fabricStatus,loading , error,message} = useAppSelector(state=>state.CustomerFabric) 
+   const {fabricStatus,loading} = useAppSelector(state=>state.CustomerFabric) 
 
     const handleDelete = () => {
         if(open._id){

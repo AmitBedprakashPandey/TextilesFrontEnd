@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, use } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import Select from 'react-select'
 import { Label } from "@/components/ui/label"
@@ -17,9 +17,8 @@ import CustomDialog from "@/components/CustomDialog"
 import { useAppDispatch, useAppSelector } from "../Redux/hooks"
 import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice"
 import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice"
-import { setOpenModel, setCloseModel,updateFabricCustomer,createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer } from "@/app/(main)/Redux/features/CustomerFabricSlice";
+import { setOpenModel, setCloseModel, updateFabricCustomer, createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer } from "@/app/(main)/Redux/features/CustomerFabricSlice"
 import { useNewtabOpener } from "@/components/ReuseFunction"
-import { clear } from "console"
 
 type OptionType = {
     value: string
