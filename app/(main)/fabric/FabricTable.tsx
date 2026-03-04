@@ -32,7 +32,7 @@ const dispatch = useAppDispatch()
     const { fabricStatus,openFabric,openPayment } = useAppSelector((state) => state.TailorFabric)
 
     const printPaper = () => {
-        openInNewTab("print");
+        // openInNewTab({data});
     }
 
     const handleDelete = (id: string) => {

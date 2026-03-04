@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { fabricCustomerApi } from "@/lib/api/services";
-import { de } from 'zod/v4/locales';
+import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice";
+import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice";
 interface IMeterGroup {
     groupNo: number;
     pattern: string | null;
@@ -19,7 +20,17 @@ interface CustomerFabricState {
     groups: IMeterGroup[]
 }
 
-interface CustomerFabricUpdateState {
+export interface CustomerFabricRetriveState {
+    _id: string,
+    company: companyUpateState,
+    vendor: vendorUpdateState,
+    date: string,
+    grandTotalMeters: number,
+    grandTotalThaans: number,
+    groups: IMeterGroup[]
+}
+
+export interface CustomerFabricUpdateState {
     _id: string,
     company: string,
     vendor: string,
@@ -34,7 +45,7 @@ interface initProps {
     loading: boolean,
     error: string | null
     message: string | null
-    localStorage: CustomerFabricState | null,
+    localStorage: CustomerFabricRetriveState | null,
     currentFabricCustomer: CustomerFabricUpdateState | null,
     openModel: boolean
 }
@@ -70,7 +81,19 @@ export const fetchFabricCustomer = createAsyncThunk('fabricCustomer/fetchFabricC
 }
 )
 
-export const createFabricCustomer = createAsyncThunk('fabricCustomer/createFabricCustomer', async (fabricCustomer: CustomerFabricState, { rejectWithValue }) => {
+
+export const fetchFabricCustomerById = createAsyncThunk<CustomerFabricRetriveState,string,{rejectValue:string}>('fabricCustomer/fetchFabricCustomerById', async (id, { rejectWithValue }) => {
+    try {
+        const response = await fabricCustomerApi.getById(id);
+        return response as CustomerFabricRetriveState;
+    }catch(error:any){
+return rejectWithValue(error?.response?.data?.message || "Something went wrong")
+    }})
+
+
+
+
+export const createFabricCustomer = createAsyncThunk<CustomerFabricUpdateState,CustomerFabricState,{rejectValue:string}>('fabricCustomer/createFabricCustomer', async (fabricCustomer, { rejectWithValue }) => {
     try {
         const response = await fabricCustomerApi.create(fabricCustomer);
         return response as CustomerFabricUpdateState;
@@ -123,7 +146,12 @@ export const CustomerFabricSlice = createSlice({
         setCloseModel: (state) => {
             state.openModel = false;
         },
-        
+        setLocalStorage: (state, action: PayloadAction<CustomerFabricRetriveState>) => {
+            state.localStorage = action.payload as CustomerFabricRetriveState;
+        },
+        clearLocalStorage: (state) => {
+            state.localStorage = null;
+        },        
         
     },
     extraReducers: (builder) => {
@@ -137,6 +165,18 @@ export const CustomerFabricSlice = createSlice({
             state.fabricStatus = action.payload;
         })
         .addCase(fetchFabricCustomer.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        })
+        .addCase(fetchFabricCustomerById.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchFabricCustomerById.fulfilled,(state,action: PayloadAction<CustomerFabricRetriveState>)=>{
+            state.loading = false;
+            state.localStorage = action.payload;
+        })
+        .addCase(fetchFabricCustomerById.rejected,(state,action)=>{
             state.loading = false;
             state.error = action.payload as string;
         })
@@ -185,6 +225,6 @@ export const CustomerFabricSlice = createSlice({
     }
 })
 
-export const { setCurrentFabricCustomer, clearCurrentFabricCustomer, clearNotification, setOpenModel, setCloseModel} = CustomerFabricSlice.actions
+export const { setCurrentFabricCustomer, clearCurrentFabricCustomer, clearNotification, setOpenModel, setCloseModel, setLocalStorage, clearLocalStorage } = CustomerFabricSlice.actions
 
 export default CustomerFabricSlice.reducer

@@ -1,3 +1,4 @@
+import { CustomerFabricUpdateState } from "@/app/(main)/Redux/features/CustomerFabricSlice";
 import { useCallback } from "react";
 
 
@@ -13,9 +14,9 @@ interface FocusNextOptions {
 }
 
 export const openInNewTab = (url: string) => {
-  if (typeof window !== "undefined") {
-    window.open(url, "_blank");
-  }
+    if (typeof window === "undefined") return;
+
+        window.open(url, "_blank", "noopener,noreferrer");
 }
 
 export const focusNext = (nextRef?: React.RefObject<HTMLInputElement | HTMLButtonElement | null>) =>
@@ -27,7 +28,7 @@ export const focusNext = (nextRef?: React.RefObject<HTMLInputElement | HTMLButto
     };
 
 
-export const useDirectFocus = ({element, name,nextRef} : FocusNextOptions) => {
+export const useDirectFocus = ({ element, name, nextRef }: FocusNextOptions) => {
     const el = nextRef.current?.getElementsByTagName(element)?.namedItem(name) as HTMLInputElement | null
     el?.focus()
     el?.select()
@@ -65,7 +66,7 @@ export const useEnterNavigation = ({
         if (next.classList.contains(reactSelectClassName)) {
             const input = next.querySelector("input") as HTMLInputElement | null;
             input?.focus();
-            
+
             return;
         }
 
@@ -90,26 +91,26 @@ export const useEnterNavigation = ({
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key !== "Enter") return;
 
-          const target = e.target as HTMLElement;
-    const form = formRef.current;
+        const target = e.target as HTMLElement;
+        const form = formRef.current;
 
-    if (!form) return;
+        if (!form) return;
 
-    const isSubmitButton =
-        target instanceof HTMLButtonElement &&
-        (target.type === "submit" || target.getAttribute("type") === "submit");
+        const isSubmitButton =
+            target instanceof HTMLButtonElement &&
+            (target.type === "submit" || target.getAttribute("type") === "submit");
 
-    // ✅ If submit button is focused → allow normal submit
-    if (isSubmitButton) {
-        return;
-    }
+        // ✅ If submit button is focused → allow normal submit
+        if (isSubmitButton) {
+            return;
+        }
 
 
         e.preventDefault();
 
-        const current =     (e.target as HTMLElement)
-                .closest(".rs__input")
-                ?.querySelector("input") ||
+        const current = (e.target as HTMLElement)
+            .closest(".rs__input")
+            ?.querySelector("input") ||
             (e.target as HTMLElement);
 
         focusNext(current as HTMLElement, e.shiftKey);

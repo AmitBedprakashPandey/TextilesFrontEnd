@@ -17,7 +17,7 @@ import CustomDialog from "@/components/CustomDialog"
 import { useAppDispatch, useAppSelector } from "../Redux/hooks"
 import { type companyUpateState } from "@/app/(main)/Redux/features/CompanySlice"
 import { type vendorUpdateState } from "@/app/(main)/Redux/features/VendorSlice"
-import { setOpenModel, setCloseModel, updateFabricCustomer, createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer } from "@/app/(main)/Redux/features/CustomerFabricSlice"
+import { setOpenModel, setCloseModel, updateFabricCustomer, createFabricCustomer, clearCurrentFabricCustomer, clearNotification, fetchFabricCustomer, setLocalStorage } from "@/app/(main)/Redux/features/CustomerFabricSlice"
 import {openInNewTab} from "@/components/ReuseFunction"
 
 
@@ -182,7 +182,7 @@ export default function Page() {
 }, [currentFabricCustomer])
 
 
-    const onSubmit = (data: z.infer<typeof formSchema>) => {
+    const onSubmit =async (data: z.infer<typeof formSchema>) => {
         const filteredGroups = data.groups
             .map(group => ({
                 ...group,
@@ -206,10 +206,13 @@ export default function Page() {
         console.log(finalPayload);
         if(currentFabricCustomer){
             dispatch(updateFabricCustomer({...finalPayload,_id:currentFabricCustomer._id}))
+                openInNewTab(`/print/${currentFabricCustomer._id}`)
             resetForm()
         }else{
-            dispatch(createFabricCustomer(finalPayload))
-            resetForm()
+            const res = await dispatch(createFabricCustomer(finalPayload)).unwrap()
+
+            openInNewTab(`/print/${res._id}`)
+            resetForm()          
         }
 
         
@@ -231,7 +234,7 @@ export default function Page() {
         //     grandTotalThaans: 0,
         // });
 
-        openInNewTab("http://localhost:3000/print")
+        openInNewTab('/print')
         // useNewtabOpener("http://localhost:3000/print")
 
         setMeters(

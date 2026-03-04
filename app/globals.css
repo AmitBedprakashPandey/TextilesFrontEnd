@@ -122,7 +122,31 @@
   }
 }
 
-@page{
-  size: A4;
-  margin: 12rem;
-}
+@media print {
+    body {
+      margin: 0;
+      padding: 0;
+      background: white;
+    }
+
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 5mm;
+      margin: 5mm;
+      background: white;
+      box-sizing: border-box;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
+    }
+    .break-inside-avoid {
+    break-inside: avoid;
+  }
+  }
+  
+  @page {
+    size: A4 portrait;
+    margin: 0
+  }
