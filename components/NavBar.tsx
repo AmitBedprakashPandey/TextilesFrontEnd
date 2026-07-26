@@ -32,7 +32,7 @@ export default function NavBar() {
             </SheetHeader>
             <SheetDescription>
                 {MenuList.map((item,index)=>{
-                    return <Link key={index} href={item.url}>{item.name}</Link>
+                    return <Link key={index} href={item.url} onClick={()=>setOpenSheet(false)}>{item.name}</Link>
                 })}
                 </SheetDescription>
           </SheetContent>
