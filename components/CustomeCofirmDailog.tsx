@@ -21,7 +21,7 @@ export default function CustomeCofirmDailog({ close, confirm , open, lable = "De
                     This action cannot be undone. This will permanently delete.
                 </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className="flex">
                 <AlertDialogCancel onClick={close}>Cancel</AlertDialogCancel>
                 <AlertDialogAction className="bg-red-500 text-white focus:outline-red-800 outline" autoFocus onClick={confirm}>{lable}</AlertDialogAction>
             </AlertDialogFooter>

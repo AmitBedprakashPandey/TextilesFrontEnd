@@ -1,82 +1,42 @@
-"use client"
-import Link from "next/link";
-import { ThemeToggle } from "../components/theme-toggle";
+"use client";
+import { Menu } from "lucide-react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { Home, LayoutDashboard } from "lucide-react";
-import { useEffect } from "react";
-import { useAppDispatch } from "@/app/(main)/Redux/hooks";
-import { fetchCompanys } from "@/app/(main)/Redux/features/CompanySlice";
-import { fetchVendor } from "@/app/(main)/Redux/features/VendorSlice";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import Link from "next/link";
+import { useState } from "react";
 
-const items = [
-    {
-        value: "item-1",
-        trigger: "Master",
-        content: <div className="flex flex-col">
-            <Link href={'/company'} className="px-6 py-1 hover:bg-red-600">- Company</Link>
-            <Link href={'/vendor'} className="px-6 py-1 hover:bg-red-600">- Vender</Link>
-            <Link href={'/master/fabric'} className="px-6 py-1 hover:bg-red-600">- Fabric</Link>
-            <Link href={'/master/readymade'} className="px-6 py-1 hover:bg-red-600">- Ready Made</Link>
-            <Link href={'/unit'} className="px-6 py-1 hover:bg-red-600">- Unit</Link>
-            <Link href={'/serial-number'} className="px-6 py-1 hover:bg-red-600">- Serial Number</Link>
-        </div>
-    },
-    {
-        value: "item-2",
-        trigger: "Fabric",
-        content: <div className="flex flex-col">
-            <Link href={'/customer'} className="px-6 py-1 hover:bg-red-600">- Customer</Link>
-            <Link href={'/fabric'} className="px-6 py-1 hover:bg-red-600">- Fabric</Link>
-        </div>
-    },
-    {
-        value: "item-3",
-        trigger: "Custom Challan",
-        content: <div className="flex flex-col">
-            <Link href={'/custom-challan'} className="px-6 py-1 hover:bg-red-600">- Road Challan</Link>
-            <Link href={'/custom-challan-sales'} className="px-6 py-1 hover:bg-red-600">- Sales Challan </Link>
-        </div>
-    },
-    
+
+const MenuList = [
+    {name:"Readymade",url:"/readymade"}
 ]
 
-
 export default function NavBar() {
-const dispatch = useAppDispatch();
-    useEffect(() => {
-        dispatch(fetchCompanys());
-        dispatch(fetchVendor());
-    }, [])
-
-
-    return (<div className="w-72 h-[100vh] bg-red-500 relative">
-        <div className="bg-linear-to-l from-red-500 to-orange-500 flex  items-center justify-between p-3">
-            <h1 className="text-white  font-bold flex  gap-2"><LayoutDashboard />Dashboard</h1>
-            <ThemeToggle />
-        </div>
-        <div className="flex flex-col justify-start">
-            <div className="">
-                <Link href={'/'} className="block w-full text-left px-3 py-2 font-bold hover:bg-red-600 hover:underline gap-2">Home</Link>
-            </div>
-            <Accordion type="single" defaultValue={"item-2"} className="max-w-lg">
-                {items.map((item) => (
-                    <AccordionItem key={item.value} value={item.value}>
-                        <AccordionTrigger className="uppercase cursor-pointer px-3 py-2 font-bold hover:bg-red-600">{item.trigger}</AccordionTrigger>
-                        <AccordionContent>{item.content}</AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-        </div>
-        <div className="absolute bottom-0 w-full p-3 bg-red-500 flex items-center justify-between">
-            <p className="text-white text-xs">© 2025 Textiles Managers. All rights reserved.</p>
-        </div>
-    </div>)
+    const [openSheet, setOpenSheet] = useState<boolean>(false);
+  return (
+    <>
+      <div className="bg-red-500 flex items-center p-3 gap-5 ">
+            <Menu className="text-white" onClick={()=>setOpenSheet(true)} />
+        <h1 className="text-white font-bold">Textiles Managers</h1>
+      </div>
+        <Sheet open={openSheet} onOpenChange={setOpenSheet}>          
+          <SheetContent  side="left" showCloseButton={false}>
+            <SheetHeader >
+              <SheetTitle>Are you absolutely sure?</SheetTitle>
+              <SheetDescription>This action cannot be undone.</SheetDescription>
+            </SheetHeader>
+            <SheetDescription>
+                {MenuList.map((item,index)=>{
+                    return <Link key={index} href={item.url}>{item.name}</Link>
+                })}
+                </SheetDescription>
+          </SheetContent>
+        </Sheet>
+    </>
+  );
 }

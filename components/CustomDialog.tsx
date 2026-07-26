@@ -33,7 +33,7 @@ export default function CustomDialog({ close, children, open, title }: props) {
         {open &&
             <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs flex items-center justify-center">
                 <div className="min-w-96 min-h-48 p-3 max-h-fit max-w-max bg-white dark:bg-gray-800 rounded-2xl relative">
-                    <div className="flex  items-center justify-between">
+                    <div className="flex  items-center justify-between pb-5">
                         <h1 className="font-bold text-md ml-5">{title}</h1>
                         <Button type="button" variant={"destructive"} className="rounded-full" onClick={close}><X size={50} /></Button>
                     </div>

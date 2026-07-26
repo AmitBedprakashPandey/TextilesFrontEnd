@@ -56,5 +56,13 @@ export const API_ENDPOINTS = {
       CREATE: "/fabriccustomer",
       UPDATE: (id: string) => `/fabriccustomer/${id}`,
       DELETE: (id: string) => `/fabriccustomer/${id}`,
+    },
+    MASTERFABRIC:{
+      GET_ALL: "/masterfabric",
+      GET_BY_ID: (id: string) => `/masterfabric/${id}`,
+      CREATE: "/masterfabric",
+      UPDATE: (id: string) => `/masterfabric/${id}`,
+      DELETE: (id: string) => `/masterfabric/${id}`,
     }
+
 }
