@@ -123,23 +123,41 @@ export default function ReadyMadeForm() {
     }
   };
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
-    try {
-      if (selectedItem === null) {
-        await dispatch(createReadyMade(data)).unwrap();
-        dispatch(setOpenFrom(false));
-        toast.success("Create Successfull");
-      } else {
-        await dispatch(
-          updateReadyMade({ _id: selectedItem._id, ...data }),
-        ).unwrap();
-        dispatch(setOpenFrom(false));
-        toast.success("Update Successfull");
-      }
-    } catch (error) {
-      console.log(error);
+async function onSubmit(data: z.infer<typeof formSchema>) {
+  try {
+    if (selectedItem ===  null) {
+      // CREATE
+      await dispatch(
+        createReadyMade(data)
+      ).unwrap();
+
+      toast.success("Create Successful");
+    } else {
+      // UPDATE
+      await dispatch(
+        updateReadyMade({
+          _id: selectedItem._id,
+          ...data,
+        })
+      ).unwrap();
+
+      toast.success("Update Successful");
     }
+
+    dispatch(setOpenFrom(false));
+
+    form.reset({
+      itemName: "",
+      rate: 0,
+      avg: 0,
+      popline: 0,
+      border: 0,
+    });
+  } catch (error) {
+    console.error(error);
+    toast.error("Something went wrong");
   }
+}
 
   return (
     <>
@@ -299,11 +317,10 @@ export default function ReadyMadeForm() {
           </FieldGroup>
 
           <Button
-            variant={"default"}
-            onClick={form.handleSubmit(onSubmit)}
+            variant={"default"}            
             className="w-full h-10 mt-4"
           >
-            {selectedItem === null ? "SAVE" : "UPDATE"}
+{selectedItem ? "UPDATE" : "SAVE"}
           </Button>
         </form>
       </div>

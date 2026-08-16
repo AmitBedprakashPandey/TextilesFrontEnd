@@ -21,7 +21,7 @@ export interface CreateReadyMade {
 
 interface ReadyMadeState {
     items: ReadyMade[];
-    selectedItem: ReadyMade;
+    selectedItem: ReadyMade | null;
     loading: boolean;
     error: string | null;
     message: string | null;
@@ -31,7 +31,7 @@ interface ReadyMadeState {
 
 const initialState: ReadyMadeState = {
     items: [],
-    selectedItem: {} as ReadyMade,
+    selectedItem: null,
     loading: false,
     error: null,
     message: null,
@@ -122,7 +122,7 @@ const readymadeSlice = createSlice({
         },
 
         clearSelectedItem: (state) => {
-            state.selectedItem = {} as ReadyMade;
+            state.selectedItem = null;
         },
 
         clearError: (state) => {
@@ -227,7 +227,7 @@ const readymadeSlice = createSlice({
                     );
 
                     if (state.selectedItem?._id === action.payload) {
-                        state.selectedItem = {} as ReadyMade;
+                        state.selectedItem = null;
                     }
                     state.message = "Deleted Successfully"
                 }

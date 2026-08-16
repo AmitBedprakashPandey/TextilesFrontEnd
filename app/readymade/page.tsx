@@ -31,6 +31,8 @@ export default function page() {
   );
 
   async function onDeleteHandler() {
+    if(!selectedItem) return;
+        
     try {
       await dispatch(deleteReadyMade(selectedItem._id)).unwrap();
       toast.success("Delete Successfull");
