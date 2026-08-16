@@ -51,7 +51,7 @@ export default function page() {
 
   function handleSelectedItemsClear() {
     dispatch(clearSelectedItem());
-    dispatch(setOpenFrom(false));
+    dispatch(setOpenFrom(true));
   }
 
   return (
