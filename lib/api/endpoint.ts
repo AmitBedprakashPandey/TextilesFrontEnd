@@ -1,4 +1,13 @@
 export const API_ENDPOINTS = {
+
+
+  READYMADE:{
+    GET_ALL: "/readymade",
+    GET_BY_ID: (id: string) => `/readymade/${id}`,
+    CREATE: "/readymade",
+    UPDATE: (id: string) => `/readymade/${id}`,
+    DELETE: (id: string) => `/readymade/${id}`,
+  },
   // serial number endpoints
   SERIALNUMBER: {
     GET_ALL: "/serial",
@@ -63,6 +72,6 @@ export const API_ENDPOINTS = {
       CREATE: "/masterfabric",
       UPDATE: (id: string) => `/masterfabric/${id}`,
       DELETE: (id: string) => `/masterfabric/${id}`,
-    }
+    },
 
 }

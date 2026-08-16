@@ -5,6 +5,8 @@ import NavBar from "@/components/NavBar";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
+import Provider from "@/lib/Redux/Providers/Providers";
+
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
@@ -20,10 +22,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
-      <body className="antialiased">
-          <Toaster position="bottom-right" richColors />
+      <body className="antialiased relative h-dvh w-full" >
+          <Provider>
+          <Toaster position="bottom-center" richColors />
           <NavBar/>
           {children}
+          </Provider>
       </body>
     </html>
   );

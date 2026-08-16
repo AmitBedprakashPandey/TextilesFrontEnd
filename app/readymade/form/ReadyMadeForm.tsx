@@ -1,4 +1,4 @@
-import { Form, useForm, Controller } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -10,51 +10,69 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  createReadyMade,
+  updateReadyMade,
+  setOpenFrom,
+} from "@/lib/Redux/Reducers/RadymadeSlice";
+import { useAppDispatch, useAppSelector } from "@/lib/Redux/hooks";
+import CustomLoading from "@/components/CustomLoading";
 const formSchema = z.object({
   itemName: z
     .string()
     .min(3, "Minimum 3 characters")
     .max(50, "Maximum 50 characters")
-    .regex(
-      /^[a-zA-Z ]+$/,
-      "Only letters and spaces are allowed"
-    ),
+    .regex(/^[a-zA-Z ]+$/, "Only letters and spaces are allowed"),
 
   rate: z
-    .string()
+    .number()
     .min(1, "Rate must be at least 1")
-    .max(100000, "Rate is too high"),
+    .max(999, "Rate is too high")
+    .optional(),
 
   avg: z
-    .string()
-    .min(1, "Average meter must be at least 1")
-    .max(100000, "Average meter is too high"),
+    .number()
+    .min(0, "Average meter must be at least 1")
+    .max(5, "Average meter is too high")
+    .optional(),
 
   popline: z
-    .string()
-    .min(1, "Popline meter must be at least 1")
-    .max(100000, "Popline meter is too high"),
+    .number()
+    .min(0, "Popline meter must be at least 1")
+    .max(1, "Popline meter is too high")
+    .optional(),
 
   border: z
-    .string()
-    .min(1, "Border meter must be at least 1")
-    .max(100000, "Border meter is too high"),
-
+    .number()
+    .min(0, "Border meter must be at least 1")
+    .max(1, "Border meter is too high")
+    .optional(),
 });
 
 export default function ReadyMadeForm() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const dispatch = useAppDispatch();
+  const { selectedItem, openfrom,loading } = useAppSelector(
+    (state) => state.ReadyMadeItems,
+  );
+
+  useEffect(() => {
+    if (selectedItem) {
+      form.reset(selectedItem);
+    }
+  }, [selectedItem]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       itemName: "",
-      rate: "",
-      avg: "",
-      popline: "",
-      border: "",
+      rate: 0,
+      avg: 0,
+      popline: 0,
+      border: 0,
     },
   });
 
@@ -69,13 +87,10 @@ export default function ReadyMadeForm() {
     const newImages = [...images, ...selectedFiles];
 
     setImages(newImages);
-      
 
     const newPreviews = newImages.map((file) => URL.createObjectURL(file));
 
     setImagePreviews(newPreviews);
-
-
 
     // Reset input so the same image can be selected again
     event.target.value = "";
@@ -89,9 +104,41 @@ export default function ReadyMadeForm() {
     setImagePreviews(updatedPreviews);
   }
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log(data,images);
-    
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      const inputs = Array.from(
+        e.currentTarget.form?.querySelectorAll<HTMLInputElement>(
+          "input:not([disabled])",
+        ) ?? [],
+      );
+
+      const currentIndex = inputs.indexOf(e.currentTarget);
+
+      if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+        inputs[currentIndex + 1].focus();
+        inputs[currentIndex + 1].select();
+      }
+    }
+  };
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      if (selectedItem === null) {
+        await dispatch(createReadyMade(data)).unwrap();
+        dispatch(setOpenFrom(false));
+        toast.success("Create Successfull");
+      } else {
+        await dispatch(
+          updateReadyMade({ _id: selectedItem._id, ...data }),
+        ).unwrap();
+        dispatch(setOpenFrom(false));
+        toast.success("Update Successfull");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (
@@ -110,6 +157,9 @@ export default function ReadyMadeForm() {
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
                     type="text"
+                    autoFocus
+                    className="capitalize"
+                    onKeyDown={handleEnter}
                     placeholder="Enter item name"
                   />
                 </Field>
@@ -126,9 +176,12 @@ export default function ReadyMadeForm() {
                   <Input
                     {...field}
                     type="number"
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     aria-invalid={fieldState.invalid}
+                    onFocus={(e) => e.target.select()}
                     autoComplete="off"
-                    inputMode="numeric"
+                    inputMode="decimal"
+                    onKeyDown={handleEnter}
                     placeholder="Enter Rate"
                   />
                 </Field>
@@ -148,13 +201,16 @@ export default function ReadyMadeForm() {
                     {...field}
                     type="number"
                     inputMode="numeric"
+                    onKeyDown={handleEnter}
                     aria-invalid={fieldState.invalid}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    onFocus={(e) => e.target.select()}
                     autoComplete="off"
                     placeholder="Enter mtr"
                   />
                 </Field>
               )}
-            />            
+            />
           </FieldGroup>
           <FieldGroup>
             <Controller
@@ -167,14 +223,16 @@ export default function ReadyMadeForm() {
                     type="number"
                     {...field}
                     inputMode="numeric"
+                    onKeyDown={handleEnter}
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="Enter mtr"
                   />
                 </Field>
               )}
             />
-            
           </FieldGroup>
           <FieldGroup>
             <Controller
@@ -187,7 +245,10 @@ export default function ReadyMadeForm() {
                     type="number"
                     {...field}
                     inputMode="numeric"
+                    onKeyDown={handleEnter}
                     aria-invalid={fieldState.invalid}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    onFocus={(e) => e.target.select()}
                     autoComplete="off"
                     placeholder="Enter mtr"
                   />
@@ -197,9 +258,9 @@ export default function ReadyMadeForm() {
           </FieldGroup>
 
           <FieldGroup>
-            <Field>            
+            <Field>
               <FieldLabel>
-                Upload Image <p className="text-xs text-red-500">(Max 5)</p>
+                Upload Image <h5 className="text-xs text-red-500">(Max 5)</h5>
               </FieldLabel>
               <Input
                 type="file"
@@ -209,7 +270,7 @@ export default function ReadyMadeForm() {
                 disabled={images.length >= 5}
                 onChange={handleImageChange}
               />
-            </Field>            
+            </Field>
             <FieldDescription>
               <div className="flex flex-wrap gap-3">
                 {imagePreviews.map((preview, index) => (
@@ -242,10 +303,12 @@ export default function ReadyMadeForm() {
             onClick={form.handleSubmit(onSubmit)}
             className="w-full h-10 mt-4"
           >
-            SAVE
+            {selectedItem === null ? "SAVE" : "UPDATE"}
           </Button>
         </form>
       </div>
+
+      {loading && <CustomLoading />}
     </>
   );
 }

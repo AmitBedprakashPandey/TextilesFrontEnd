@@ -1,4 +1,3 @@
-import { de } from "zod/v4/locales";
 import apiClient from "./config";
 import { API_ENDPOINTS } from "./endpoint";
 
@@ -30,6 +29,13 @@ export class ApiService {
 
 }
 
+ export const readyMadeApi = {
+    getAll: () => ApiService.getAll(API_ENDPOINTS.READYMADE.GET_ALL),
+    getById: (id: string) => ApiService.getById(API_ENDPOINTS.READYMADE.GET_BY_ID(id)),
+    create: (data: any) => ApiService.create(API_ENDPOINTS.READYMADE.CREATE, data),
+    update: (id: string, data: any) => ApiService.update(API_ENDPOINTS.READYMADE.UPDATE(id), data),
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.READYMADE.DELETE(id)),
+ }
 
 export const serialNumberApi = {
     getAll: () => ApiService.getAll(API_ENDPOINTS.SERIALNUMBER.GET_ALL),
