@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className="antialiased relative h-dvh w-full" >
           <Provider>
-          <Toaster position="bottom-center" richColors />
+          <Toaster position="top-center" richColors />
           <NavBar/>
           {children}
           </Provider>

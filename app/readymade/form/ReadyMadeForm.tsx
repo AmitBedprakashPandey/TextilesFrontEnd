@@ -10,8 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import {
   createReadyMade,
   updateReadyMade,
@@ -54,8 +55,10 @@ const formSchema = z.object({
 export default function ReadyMadeForm() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [showItemSearch, setShowItemSearch] = useState(false);
+
   const dispatch = useAppDispatch();
-  const { selectedItem, openfrom,loading } = useAppSelector(
+  const { items, selectedItem, openfrom, loading } = useAppSelector(
     (state) => state.ReadyMadeItems,
   );
 
@@ -123,41 +126,79 @@ export default function ReadyMadeForm() {
     }
   };
 
-async function onSubmit(data: z.infer<typeof formSchema>) {
-  try {
-    if (selectedItem ===  null) {
-      // CREATE
-      await dispatch(
-        createReadyMade(data)
-      ).unwrap();
+  const itemSearch = form.watch("itemName");
 
-      toast.success("Create Successful");
-    } else {
-      // UPDATE
-      await dispatch(
-        updateReadyMade({
-          _id: selectedItem._id,
-          ...data,
-        })
-      ).unwrap();
+  const filteredItems = useMemo(() => {
+    const search = itemSearch?.trim().toLowerCase();
 
-      toast.success("Update Successful");
+    if (!search) return [];
+
+    return items.filter((item) => item.itemName.toLowerCase().includes(search));
+  }, [items, itemSearch]);
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      if (selectedItem === null) {
+        // CREATE
+        await dispatch(createReadyMade(data)).unwrap();
+
+        toast.success("Create Successful");
+      } else {
+        // UPDATE
+        await dispatch(
+          updateReadyMade({
+            _id: selectedItem._id,
+            ...data,
+          }),
+        ).unwrap();
+
+        toast.success("Update Successful");
+      }
+
+      dispatch(setOpenFrom(false));
+
+      form.reset({
+        itemName: "",
+        rate: 0,
+        avg: 0,
+        popline: 0,
+        border: 0,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+  }
+
+  function HighlightText({ text, search }: { text: string; search: string }) {
+    if (!search.trim()) {
+      return <>{text}</>;
     }
 
-    dispatch(setOpenFrom(false));
+    const regex = new RegExp(
+      `(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi",
+    );
 
-    form.reset({
-      itemName: "",
-      rate: 0,
-      avg: 0,
-      popline: 0,
-      border: 0,
-    });
-  } catch (error) {
-    console.error(error);
-    toast.error("Something went wrong");
+    const parts = text.split(regex);
+
+    return (
+      <>
+        {parts.map((part, index) =>
+          regex.test(part) ? (
+            <span
+              key={index}
+              className="rounded bg-yellow-200 px-0.5 font-semibold text-black"
+            >
+              {part}
+            </span>
+          ) : (
+            <span key={index}>{part}</span>
+          ),
+        )}
+      </>
+    );
   }
-}
 
   return (
     <>
@@ -170,16 +211,73 @@ async function onSubmit(data: z.infer<typeof formSchema>) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Enter Item Name</FieldLabel>
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    autoComplete="off"
-                    type="text"
-                    autoFocus
-                    className="capitalize"
-                    onKeyDown={handleEnter}
-                    placeholder="Enter item name"
-                  />
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                      type="text"
+                      autoFocus
+                      className="capitalize"
+                      placeholder="enter item name"
+                      onFocus={() => {
+                        if(!selectedItem){
+                          setShowItemSearch(true);
+
+                        }
+                      }}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        setShowItemSearch(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setShowItemSearch(false);
+                          return;
+                        }
+
+                        handleEnter(e);
+                      }}
+                    />
+
+                    {showItemSearch && itemSearch.trim() && (
+                      <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-md">
+                        {filteredItems.length > 0 ? (
+                          <div className="max-h-60 overflow-y-auto">
+                            {filteredItems.map((item) => (
+                              <button
+                                type="button"
+                                key={item._id}
+                                className="block w-full px-3 py-2 text-left hover:bg-gray-100"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+
+                                  form.setValue("itemName", item.itemName, {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                  });
+
+                                  setShowItemSearch(false);
+                                }}
+                              >
+                                <HighlightText
+                                  text={item.itemName}
+                                  search={itemSearch}
+                                />                                
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500">
+                            No existing item found.
+                            <div className="text-xs text-gray-400">
+                              Press Enter to create "{itemSearch}"
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </Field>
               )}
             />
@@ -278,7 +376,7 @@ async function onSubmit(data: z.infer<typeof formSchema>) {
           <FieldGroup>
             <Field>
               <FieldLabel>
-                Upload Image <h5 className="text-xs text-red-500">(Max 5)</h5>
+                Upload Image <span className="text-xs text-red-500">(Max 5)</span>
               </FieldLabel>
               <Input
                 type="file"
@@ -316,11 +414,8 @@ async function onSubmit(data: z.infer<typeof formSchema>) {
             </FieldDescription>
           </FieldGroup>
 
-          <Button
-            variant={"default"}            
-            className="w-full h-10 mt-4"
-          >
-{selectedItem ? "UPDATE" : "SAVE"}
+          <Button variant={"default"} className="w-full h-10 mt-4">
+            {selectedItem ? "UPDATE" : "SAVE"}
           </Button>
         </form>
       </div>

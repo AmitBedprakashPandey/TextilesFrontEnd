@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Trash, Edit, Plus } from "lucide-react";
 import CustomeCofirmDailog from "@/components/CustomeCofirmDailog";
 import ReadymadeForm from "@/app/readymade/form/ReadyMadeForm";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CustomDialog from "@/components/CustomDialog";
 import { useAppDispatch, useAppSelector } from "@/lib/Redux/hooks";
 import {
@@ -23,12 +23,29 @@ import {
   deleteReadyMade,
 } from "@/lib/Redux/Reducers/RadymadeSlice";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export default function page() {
   const dispatch = useAppDispatch();
+  
   const { selectedItem, items, openConfirm, openfrom } = useAppSelector(
     (state) => state.ReadyMadeItems,
   );
+
+  const [search, setSearch] = useState("");
+
+    const filteredItems = useMemo(() => {
+    const searchValue = search.trim().toLowerCase();
+
+    if (!searchValue) {
+      return items;
+    }
+
+    return items.filter((item) =>
+      item.itemName.toLowerCase().includes(searchValue),
+    );
+  }, [items, search]);
+
 
   async function onDeleteHandler() {
     if(!selectedItem) return;
@@ -56,8 +73,49 @@ export default function page() {
     dispatch(setOpenFrom(true));
   }
 
+  function HighlightText({
+  text,
+  search,
+}: {
+  text: string;
+  search: string;
+}) {
+  if (!search.trim()) {
+    return <>{text}</>;
+  }
+
+  const regex = new RegExp(
+    `(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+    "gi",
+  );
+
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        regex.test(part) ? (
+          <span
+            key={index}
+            className="capitalize rounded bg-yellow-200 px-0.5 font-semibold text-black"
+          >
+            {part}
+          </span>
+        ) : (
+          <span key={index}>{part}</span>
+        ),
+      )}
+    </>
+  );
+}
+
   return (
     <div className="block">
+
+    <div className="p-3">
+      <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)}placeholder="Search" className="border-black" />
+    </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -68,10 +126,10 @@ export default function page() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item, index) => (
+          {filteredItems.map((item, index) => (
             <TableRow key={item._id}>
               <TableCell className="">{index + 1}</TableCell>
-              <TableCell>{item.itemName}</TableCell>
+              <TableCell><HighlightText text={item.itemName} search={search} /></TableCell>
               <TableCell className="text-right">{item.rate}</TableCell>
               <TableCell className="flex justify-end">
                 <div className="flex gap-3">
@@ -97,8 +155,9 @@ export default function page() {
           ))}
         </TableBody>
       </Table>
+    
 
-      <div className="absolute bottom-5 right-5">
+      <div className="fixed bottom-5 right-5">
         <Button
           className="rounded-full w-14 h-14"
           onClick={() => handleSelectedItemsClear()}
