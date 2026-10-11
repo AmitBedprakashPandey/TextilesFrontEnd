@@ -1,25 +1,18 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  createReadyMade,
-  updateReadyMade,
-  setOpenFrom,
-} from "@/lib/Redux/Reducers/RadymadeSlice";
+import { createReadyMade, updateReadyMade, setOpenFrom} from "@/lib/Redux/Reducers/RadymadeSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/Redux/hooks";
 import CustomLoading from "@/components/CustomLoading";
+import Image from "next/image";
+
 const formSchema = z.object({
   itemName: z
     .string()
@@ -50,6 +43,7 @@ const formSchema = z.object({
     .min(0, "Border meter must be at least 1")
     .max(1, "Border meter is too high")
     .optional(),
+    
 });
 
 export default function ReadyMadeForm() {
@@ -58,13 +52,13 @@ export default function ReadyMadeForm() {
   const [showItemSearch, setShowItemSearch] = useState(false);
 
   const dispatch = useAppDispatch();
-  const { items, selectedItem, openfrom, loading } = useAppSelector(
-    (state) => state.ReadyMadeItems,
-  );
+  const { items, selectedItem, openfrom, loading } = useAppSelector((state) => state.ReadyMadeItems,);
 
   useEffect(() => {
     if (selectedItem) {
-      form.reset(selectedItem);
+      form.reset(selectedItem);      
+      setImagePreviews(selectedItem.images?.map((image) => image.url) || []);
+      console.log("Selected Item:", selectedItem);
     }
   }, [selectedItem]);
 
@@ -140,15 +134,18 @@ export default function ReadyMadeForm() {
     try {
       if (selectedItem === null) {
         // CREATE
-        await dispatch(createReadyMade(data)).unwrap();
+        await dispatch(createReadyMade({...data, images: images })).unwrap();
 
+        console.log("Images to be uploaded:", images);
         toast.success("Create Successful");
       } else {
         // UPDATE
+        console.log("Selected Item ID:", images);
         await dispatch(
           updateReadyMade({
             _id: selectedItem._id,
             ...data,
+            images: images
           }),
         ).unwrap();
 
@@ -241,7 +238,7 @@ export default function ReadyMadeForm() {
                     />
 
                     {showItemSearch && itemSearch.trim() && (
-                      <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-md">
+                      <div className="absolute z-50 mt-1 w-full rounded-md borde bg-white shadow-md">
                         {filteredItems.length > 0 ? (
                           <div className="max-h-60 overflow-y-auto">
                             {filteredItems.map((item) => (
@@ -267,14 +264,16 @@ export default function ReadyMadeForm() {
                               </button>
                             ))}
                           </div>
-                        ) : (
-                          <div className="px-3 py-2 text-sm text-gray-500">
-                            No existing item found.
-                            <div className="text-xs text-gray-400">
-                              Press Enter to create "{itemSearch}"
-                            </div>
-                          </div>
-                        )}
+                        ) 
+                        : (<></>
+                          // <div className="px-3 py-2 text-sm text-gray-500">
+                          //   No existing item found.
+                          //   <div className="text-xs text-gray-400">
+                          //     Press Enter to create "{itemSearch}"
+                          //   </div>
+                          // </div>
+                        )
+                        }
                       </div>
                     )}
                   </div>
@@ -369,7 +368,7 @@ export default function ReadyMadeForm() {
                     placeholder="Enter mtr"
                   />
                 </Field>
-              )}
+              )}  
             />
           </FieldGroup>
 
@@ -394,11 +393,14 @@ export default function ReadyMadeForm() {
                     key={preview}
                     className="relative w-20 h-20 border rounded overflow-hidden"
                   >
-                    <img
+                    <Image
                       src={preview}
+                      width={80}
+                      height={80}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                      
 
                     <Button
                       variant={"destructive"}
