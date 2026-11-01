@@ -2,6 +2,22 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { readyMadeApi } from "@/lib/api/services";
 import { API_ENDPOINTS } from "@/lib/api/endpoint";
 
+export interface ImagesList {
+    publicId: string;
+    url: string;
+    folder: string,
+    format: string,
+    width: number,
+    height: number,
+    size: number;
+
+}
+
+export interface Size {
+    size: string,
+    rate: string
+}
+
 export interface ReadyMade {
     _id: string;
     itemName: string;
@@ -9,14 +25,42 @@ export interface ReadyMade {
     avg?: number;
     popline?: number;
     border?: number;
+    size?: Size[];
+    images?: ImagesList[];
+}
+
+const emtyReadyMade: ReadyMade = {
+    _id: "",
+    itemName: "",
+    size: [],
+    avg: 0,
+    border: 0,
+    popline: 0,
+    images: [],
+
+
+}
+export interface UploadReadyMade {
+    _id: string;
+    itemName: string;
+    rate?: number;
+    avg?: number;
+    size?: Size[]
+    popline?: number;
+    border?: number;
+    images?: File[];
+    trash?:ImagesList[]
 }
 
 export interface CreateReadyMade {
     itemName: string;
     rate?: number;
     avg?: number;
+    size?: Size[];
     popline?: number;
     border?: number;
+    images?: File[];
+    trash?:ImagesList[]
 }
 
 interface ReadyMadeState {
@@ -26,7 +70,9 @@ interface ReadyMadeState {
     error: string | null;
     message: string | null;
     openfrom: boolean,
-    openConfirm: boolean
+    selectProduct: { open: boolean, data: ReadyMade }
+    openConfirm: boolean;
+    imageTrash:ImagesList[]
 }
 
 const initialState: ReadyMadeState = {
@@ -35,8 +81,10 @@ const initialState: ReadyMadeState = {
     loading: false,
     error: null,
     message: null,
+    selectProduct: { open: false, data: emtyReadyMade },
     openConfirm: false,
-    openfrom: false
+    openfrom: false,
+    imageTrash: [],
 };
 
 // GET ALL
@@ -81,7 +129,7 @@ export const createReadyMade = createAsyncThunk<ReadyMade, CreateReadyMade, { re
 );
 
 // UPDATE
-export const updateReadyMade = createAsyncThunk<ReadyMade, ReadyMade, { rejectValue: string }>(
+export const updateReadyMade = createAsyncThunk<ReadyMade, UploadReadyMade, { rejectValue: string }>(
     "readymade/updateReadyMade",
     async (
         data,
@@ -120,11 +168,9 @@ const readymadeSlice = createSlice({
         setSelectedItem: (state, action: PayloadAction<ReadyMade>) => {
             state.selectedItem = action.payload;
         },
-
         clearSelectedItem: (state) => {
             state.selectedItem = null;
         },
-
         clearError: (state) => {
             state.error = null;
         },
@@ -134,6 +180,19 @@ const readymadeSlice = createSlice({
         setOpenConfirm: (state, action: PayloadAction<boolean>) => {
             state.openConfirm = action.payload;
         },
+        setProductCard: (state, action: PayloadAction<{ open: boolean, data: ReadyMade }>) => {
+            state.selectProduct.open = action.payload.open
+            state.selectProduct.data = action.payload.data
+        },
+        clearProductCard: (state) => {
+            state.selectProduct.data = emtyReadyMade
+            state.selectProduct.open = false
+        },
+        setImageTrash: (state, action: PayloadAction<ImagesList[]>) => {
+            state.imageTrash = action.payload
+        },
+
+        
     },
 
     extraReducers: (builder) => {
@@ -176,10 +235,10 @@ const readymadeSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createReadyMade.fulfilled,(state, action: PayloadAction<ReadyMade>) => {
-                    state.loading = false;
-                    state.items.push(action.payload);
-                    state.message = "Created Successfully"
+            .addCase(createReadyMade.fulfilled, (state, action: PayloadAction<ReadyMade>) => {
+                state.loading = false;
+                state.items.push(action.payload);
+                state.message = "Created Successfully"
             })
             .addCase(createReadyMade.rejected, (state, action) => {
                 state.loading = false;
@@ -192,21 +251,21 @@ const readymadeSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(updateReadyMade.fulfilled,(state, action: PayloadAction<ReadyMade>) => {
-                    state.loading = false;
-                    const index = state.items.findIndex(
-                        (item) => item._id === action.payload._id
-                    );
+            .addCase(updateReadyMade.fulfilled, (state, action: PayloadAction<ReadyMade>) => {
+                state.loading = false;
+                const index = state.items.findIndex(
+                    (item) => item._id === action.payload._id
+                );
 
-                    if (index !== -1) {
-                        state.items[index] = action.payload;
-                    }
-
-                    if (state.selectedItem?._id === action.payload._id) {
-                        state.selectedItem = action.payload;
-                    }
-                    state.message = "Updated Successfully"
+                if (index !== -1) {
+                    state.items[index] = action.payload;
                 }
+
+                if (state.selectedItem?._id === action.payload._id) {
+                    state.selectedItem = action.payload;
+                }
+                state.message = "Updated Successfully"
+            }
             )
             .addCase(updateReadyMade.rejected, (state, action) => {
                 state.loading = false;
@@ -219,18 +278,18 @@ const readymadeSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(deleteReadyMade.fulfilled,(state, action: PayloadAction<string>) => {
-                    state.loading = false;
+            .addCase(deleteReadyMade.fulfilled, (state, action: PayloadAction<string>) => {
+                state.loading = false;
 
-                    state.items = state.items.filter(
-                        (item) => item._id !== action.payload
-                    );
+                state.items = state.items.filter(
+                    (item) => item._id !== action.payload
+                );
 
-                    if (state.selectedItem?._id === action.payload) {
-                        state.selectedItem = null;
-                    }
-                    state.message = "Deleted Successfully"
+                if (state.selectedItem?._id === action.payload) {
+                    state.selectedItem = null;
                 }
+                state.message = "Deleted Successfully"
+            }
             )
             .addCase(deleteReadyMade.rejected, (state, action) => {
                 state.loading = false;
@@ -239,6 +298,6 @@ const readymadeSlice = createSlice({
     },
 });
 
-export const { clearSelectedItem, clearError, setSelectedItem,setOpenConfirm,setOpenFrom } = readymadeSlice.actions;
+export const { clearSelectedItem, clearError, setSelectedItem, setOpenConfirm, setOpenFrom, clearProductCard, setProductCard,} = readymadeSlice.actions;
 
 export default readymadeSlice.reducer;

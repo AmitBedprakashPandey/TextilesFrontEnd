@@ -158,3 +158,161 @@
     margin: 0
 
   }
+
+  /* -------------------------------------------------------------------- */
+  /* Karigar cloth meter register - print only document                    */
+  /* -------------------------------------------------------------------- */
+
+  .print-document {
+    display: none;
+  }
+
+  @media print {
+    body {
+      background: #ffffff;
+    }
+
+    /* The interactive form, navigation and totals bar never reach paper. */
+    .print-hidden {
+      display: none !important;
+    }
+
+    .print-document {
+      display: block !important;
+    }
+
+    .print-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 12mm;
+      box-sizing: border-box;
+      color: #000000;
+      background: #ffffff;
+      font-size: 11pt;
+    }
+
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8mm;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 4mm;
+      margin-bottom: 5mm;
+    }
+
+    .print-title {
+      font-size: 16pt;
+      font-weight: 700;
+    }
+
+    .print-subtitle {
+      font-size: 10pt;
+    }
+
+    .print-meta {
+      font-size: 10pt;
+      text-align: right;
+    }
+
+    .print-meta-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4mm;
+    }
+
+    .print-meta dt {
+      font-weight: 600;
+    }
+
+    .print-meta dd {
+      margin: 0;
+      min-width: 45mm;
+      text-align: left;
+    }
+
+    .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5pt;
+    }
+
+    /* Repeat the table header on every printed page. */
+    .print-table thead {
+      display: table-header-group;
+    }
+
+    .print-table tfoot {
+      display: table-row-group;
+    }
+
+    .print-table tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .print-table th,
+    .print-table td {
+      border: 1px solid #000000;
+      padding: 2mm 2.5mm;
+    }
+
+    .print-table thead th {
+      background: #f1f1f1;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .print-col-serial {
+      width: 12mm;
+      text-align: center;
+    }
+
+    .print-col-column {
+      width: 22mm;
+    }
+
+    .print-subtotal-row td {
+      background: #f6f6f6;
+    }
+
+    .print-col-number {
+      width: 26mm;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .print-total-label {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .print-total-value {
+      font-weight: 700;
+    }
+
+    .print-signatures {
+      display: flex;
+      justify-content: space-between;
+      gap: 20mm;
+      margin-top: 18mm;
+    }
+
+    .print-signature {
+      flex: 1;
+      font-size: 10pt;
+      text-align: center;
+    }
+
+    .print-signature-line {
+      display: block;
+      border-top: 1px solid #000000;
+      margin-bottom: 2mm;
+    }
+
+    .print-footer {
+      margin-top: 10mm;
+      font-size: 8.5pt;
+      text-align: center;
+    }
+  }

@@ -1,17 +1,29 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Field, FieldDescription, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Plus, Trash } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-import { createReadyMade, updateReadyMade, setOpenFrom} from "@/lib/Redux/Reducers/RadymadeSlice";
+import CustomSelectInput from "@/components/CustomSelectInput";
+import {
+  createReadyMade,
+  updateReadyMade,
+  setOpenFrom,
+  ImagesList,
+} from "@/lib/Redux/Reducers/RadymadeSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/Redux/hooks";
 import CustomLoading from "@/components/CustomLoading";
 import Image from "next/image";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { SizeList } from "@/lib/constants/sizeData";
 
 const formSchema = z.object({
   itemName: z
@@ -43,22 +55,32 @@ const formSchema = z.object({
     .min(0, "Border meter must be at least 1")
     .max(1, "Border meter is too high")
     .optional(),
-    
+  size: z
+    .array(
+      z.object({
+        size: z.string(),
+        rate: z.string(),
+      }),
+    )
+    .default([])
+    .optional(),
+  tempSize: z.string().optional(),
 });
 
 export default function ReadyMadeForm() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [showItemSearch, setShowItemSearch] = useState(false);
-
+  const [currentSize, setCurrentSize] = useState("");
+  const [currentRate, setCurrentRate] = useState("");
   const dispatch = useAppDispatch();
-  const { items, selectedItem, openfrom, loading } = useAppSelector((state) => state.ReadyMadeItems,);
+  const [imageTrash, setImageTrash] = useState<ImagesList[]>([]);
+
+  const { items, selectedItem, loading } = useAppSelector((state) => state.ReadyMadeItems);
 
   useEffect(() => {
     if (selectedItem) {
-      form.reset(selectedItem);      
+      form.reset(selectedItem);
       setImagePreviews(selectedItem.images?.map((image) => image.url) || []);
-      console.log("Selected Item:", selectedItem);
     }
   }, [selectedItem]);
 
@@ -70,26 +92,34 @@ export default function ReadyMadeForm() {
       avg: 0,
       popline: 0,
       border: 0,
+      size: [],
+      tempSize: "",
     },
   });
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const selectedFiles = Array.from(event.target.files || []);
+    const selectedFiles = Array.from(event.target.files ?? []);
 
-    if (images.length + selectedFiles.length > 5) {
-      alert("You can upload a maximum of 5 images.");
+    const remainingSlots = 5 - images.length;
+
+    if (remainingSlots <= 0) {
+      toast.warning("You can upload a maximum of 5 images.");
       return;
     }
 
-    const newImages = [...images, ...selectedFiles];
+    if (selectedFiles.length > remainingSlots) {
+      toast.warning(`You can only add ${remainingSlots} more image(s).`);
+    }
 
-    setImages(newImages);
+    const filesToAdd = selectedFiles.slice(0, remainingSlots);
 
-    const newPreviews = newImages.map((file) => URL.createObjectURL(file));
+    setImages([...images, ...filesToAdd]);
 
-    setImagePreviews(newPreviews);
+    setImagePreviews([
+      ...imagePreviews,
+      ...filesToAdd.map((file) => URL.createObjectURL(file)),
+    ]);
 
-    // Reset input so the same image can be selected again
     event.target.value = "";
   }
 
@@ -97,6 +127,15 @@ export default function ReadyMadeForm() {
     const updatedImages = images.filter((_, i) => i !== index);
     const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
 
+    const trash = imagePreviews.filter((_,i)=>i == index);
+   
+    const d = items.flatMap((item)=>item.images ?? []).find((ite)=>ite.url === trash[0])
+    if(d){
+      setImageTrash((prev) => [...prev, d]);
+        }
+    
+    
+    
     setImages(updatedImages);
     setImagePreviews(updatedPreviews);
   }
@@ -122,20 +161,15 @@ export default function ReadyMadeForm() {
 
   const itemSearch = form.watch("itemName");
 
-  const filteredItems = useMemo(() => {
-    const search = itemSearch?.trim().toLowerCase();
-
-    if (!search) return [];
-
-    return items.filter((item) => item.itemName.toLowerCase().includes(search));
-  }, [items, itemSearch]);
+  const { fields, append, remove } = useFieldArray({control: form.control, name: "size"});
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
       if (selectedItem === null) {
         // CREATE
-        await dispatch(createReadyMade({...data, images: images })).unwrap();
-
+        await dispatch(createReadyMade({ ...data,
+          //  images: images 
+          })).unwrap();
         console.log("Images to be uploaded:", images);
         toast.success("Create Successful");
       } else {
@@ -145,7 +179,8 @@ export default function ReadyMadeForm() {
           updateReadyMade({
             _id: selectedItem._id,
             ...data,
-            images: images
+            // images: images,
+            trash:imageTrash
           }),
         ).unwrap();
 
@@ -160,6 +195,7 @@ export default function ReadyMadeForm() {
         avg: 0,
         popline: 0,
         border: 0,
+        size: [],
       });
     } catch (error) {
       console.error(error);
@@ -167,118 +203,25 @@ export default function ReadyMadeForm() {
     }
   }
 
-  function HighlightText({ text, search }: { text: string; search: string }) {
-    if (!search.trim()) {
-      return <>{text}</>;
-    }
 
-    const regex = new RegExp(
-      `(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-      "gi",
-    );
-
-    const parts = text.split(regex);
-
-    return (
-      <>
-        {parts.map((part, index) =>
-          regex.test(part) ? (
-            <span
-              key={index}
-              className="rounded bg-yellow-200 px-0.5 font-semibold text-black"
-            >
-              {part}
-            </span>
-          ) : (
-            <span key={index}>{part}</span>
-          ),
-        )}
-      </>
-    );
-  }
 
   return (
     <>
       <div className="flex flex-col gap-3">
         <form id="form-readymade" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="itemName"
+            <CustomSelectInput
               control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Enter Item Name</FieldLabel>
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                      type="text"
-                      autoFocus
-                      className="capitalize"
-                      placeholder="enter item name"
-                      onFocus={() => {
-                        if(!selectedItem){
-                          setShowItemSearch(true);
-
-                        }
-                      }}
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        setShowItemSearch(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setShowItemSearch(false);
-                          return;
-                        }
-
-                        handleEnter(e);
-                      }}
-                    />
-
-                    {showItemSearch && itemSearch.trim() && (
-                      <div className="absolute z-50 mt-1 w-full rounded-md borde bg-white shadow-md">
-                        {filteredItems.length > 0 ? (
-                          <div className="max-h-60 overflow-y-auto">
-                            {filteredItems.map((item) => (
-                              <button
-                                type="button"
-                                key={item._id}
-                                className="block w-full px-3 py-2 text-left hover:bg-gray-100"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-
-                                  form.setValue("itemName", item.itemName, {
-                                    shouldValidate: true,
-                                    shouldDirty: true,
-                                  });
-
-                                  setShowItemSearch(false);
-                                }}
-                              >
-                                <HighlightText
-                                  text={item.itemName}
-                                  search={itemSearch}
-                                />                                
-                              </button>
-                            ))}
-                          </div>
-                        ) 
-                        : (<></>
-                          // <div className="px-3 py-2 text-sm text-gray-500">
-                          //   No existing item found.
-                          //   <div className="text-xs text-gray-400">
-                          //     Press Enter to create "{itemSearch}"
-                          //   </div>
-                          // </div>
-                        )
-                        }
-                      </div>
-                    )}
-                  </div>
-                </Field>
-              )}
+              name="itemName"
+              label="Enter Item Name"
+              placeholder="Enter item name"
+              inputLabel="itemName"
+              inputValue="_id"
+              items={items}
+              selectedItem={selectedItem}
+              itemSearch={itemSearch}
+              handleEnter={handleEnter}
+              autoFocus={true}
             />
           </FieldGroup>
           <FieldGroup>
@@ -303,7 +246,6 @@ export default function ReadyMadeForm() {
               )}
             />
           </FieldGroup>
-
           <FieldGroup>
             <Controller
               name="avg"
@@ -368,21 +310,87 @@ export default function ReadyMadeForm() {
                     placeholder="Enter mtr"
                   />
                 </Field>
-              )}  
+              )}
             />
           </FieldGroup>
+          <Card className="mt-3">
+            <CardHeader>
+              <h1 className="font-bold text-md ml-5">Select Size</h1>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center">
 
-          <FieldGroup>
+              <CustomSelectInput
+                control={form.control}
+                name={"tempSize"}
+                label="Select Size"
+                placeholder="Select size"
+                inputLabel="size"
+                inputValue="size"
+                items={SizeList}
+                itemSearch={form.watch("tempSize") || ""}
+                onSelect={(selected) => {
+                  if (selected) {
+                    setCurrentSize(selected.size);
+                  }
+                }}
+                handleEnter={handleEnter}
+              />
+              <Field>
+                <FieldLabel>Enter Rate</FieldLabel>
+                <Input
+                  type="text"
+                  value={currentRate}
+                  onChange={(e) => setCurrentRate(e.target.value)}
+                  placeholder="Enter rate"
+                />
+              </Field>
+
+              <Button
+                type="button"
+                variant="default"
+                className="mt-7"
+                onClick={() => {
+                  append({ size: currentSize, rate: currentRate });
+                  setCurrentSize("");
+                  setCurrentRate("");
+                  form.setValue("tempSize", "");                  
+                }}
+              >
+                <Plus /> Add Size
+              </Button>
+              </div>
+              <div className="p-3 grid grid-cols-3 gap-2">
+                {fields.map((field, index) => (
+                  <div key={field.id} className=" gap-2">
+                    {field.size} - {field.rate}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          {/* <FieldGroup>
             <Field>
               <FieldLabel>
-                Upload Image <span className="text-xs text-red-500">(Max 5)</span>
+                Upload Image{" "}
+                <span className="text-xs text-red-500">
+                  (Max {imagePreviews.length}/5)
+                </span>
               </FieldLabel>
               <Input
                 type="file"
                 accept="image/*"
                 capture="environment"
                 multiple
-                disabled={images.length >= 5}
+                disabled={imagePreviews.length >= 5}
                 onChange={handleImageChange}
               />
             </Field>
@@ -400,7 +408,6 @@ export default function ReadyMadeForm() {
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-                      
 
                     <Button
                       variant={"destructive"}
@@ -414,8 +421,7 @@ export default function ReadyMadeForm() {
                 ))}
               </div>
             </FieldDescription>
-          </FieldGroup>
-
+          </FieldGroup> */}
           <Button variant={"default"} className="w-full h-10 mt-4">
             {selectedItem ? "UPDATE" : "SAVE"}
           </Button>

@@ -25,7 +25,9 @@ export default function RootLayout({
       <body className="antialiased relative h-dvh w-full" >
           <Provider>
           <Toaster position="top-center" richColors />
-          <NavBar/>
+          <div className="print-hidden">
+            <NavBar/>
+          </div>
           {children}
           </Provider>
       </body>

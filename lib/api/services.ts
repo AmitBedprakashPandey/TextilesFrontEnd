@@ -1,6 +1,42 @@
 import apiClient from "./config";
 import { API_ENDPOINTS } from "./endpoint";
 
+
+function toFormData(data: object): FormData {
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+
+        // Handle arrays
+        if (Array.isArray(value)) {
+            if (value.every((item) => item instanceof File)) {
+                // Multiple image files
+                value.forEach((file) => {
+                    formData.append(key, file);
+                });
+            } else {
+                // Arrays of objects, strings, numbers, etc.
+                formData.append(key, JSON.stringify(value));
+            }
+
+            return;
+        }
+
+        // Handle individual files
+        if (value instanceof Blob) {
+            formData.append(key, value);
+        } else if (typeof value === "object") {
+            formData.append(key, JSON.stringify(value));
+        } else {
+            formData.append(key, String(value));
+        }
+    });
+
+    return formData;
+}
+
+
 export class ApiService {
     // Generic CRUD operations
     static async getAll<T>(endpoint: string): Promise<T[]> {
@@ -18,6 +54,16 @@ export class ApiService {
         return response.data
     }
 
+    static async createWithImages<T>(endpoint: string, data: Partial<T>): Promise<T> {
+        const response = await apiClient.post(endpoint, toFormData(data), { headers: { "Content-Type": "multipart/form-data" } })
+        return response.data
+    }
+
+    static async updateWithImages<T>(endpoint: string, data: Partial<T>): Promise<T> {
+        const response = await apiClient.put(endpoint, toFormData(data), { headers: { "Content-Type": "multipart/form-data" } })
+        return response.data
+    }
+
     static async update<T>(endpoint: string, data: Partial<T>): Promise<T> {
         const response = await apiClient.put(endpoint, data)
         return response.data
@@ -29,13 +75,13 @@ export class ApiService {
 
 }
 
- export const readyMadeApi = {
+export const readyMadeApi = {
     getAll: () => ApiService.getAll(API_ENDPOINTS.READYMADE.GET_ALL),
     getById: (id: string) => ApiService.getById(API_ENDPOINTS.READYMADE.GET_BY_ID(id)),
-    create: (data: any) => ApiService.create(API_ENDPOINTS.READYMADE.CREATE, data),
-    update: (id: string, data: any) => ApiService.update(API_ENDPOINTS.READYMADE.UPDATE(id), data),
+    create: (data: any) => ApiService.createWithImages(API_ENDPOINTS.READYMADE.CREATE, data),
+    update: (id: string, data: any) => ApiService.updateWithImages(API_ENDPOINTS.READYMADE.UPDATE(id), data),
     delete: (id: string) => ApiService.delete(API_ENDPOINTS.READYMADE.DELETE(id)),
- }
+}
 
 export const serialNumberApi = {
     getAll: () => ApiService.getAll(API_ENDPOINTS.SERIALNUMBER.GET_ALL),
@@ -57,7 +103,7 @@ export const unitApi = {
 export const areaApi = {
     getAll: () => ApiService.getAll(API_ENDPOINTS.AREA.GET_ALL),
     getById: (id: string) => ApiService.getById(API_ENDPOINTS.AREA.GET_BY_ID(id)),
-    create: (data: any) => ApiService.create(API_ENDPOINTS.AREA.CREATE, data),  
+    create: (data: any) => ApiService.create(API_ENDPOINTS.AREA.CREATE, data),
     update: (id: string, data: any) => ApiService.update(API_ENDPOINTS.AREA.UPDATE(id), data),
     delete: (id: string) => ApiService.delete(API_ENDPOINTS.AREA.DELETE(id)),
 }

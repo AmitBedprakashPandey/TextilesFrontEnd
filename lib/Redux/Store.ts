@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
 import ReadyMadeSlice from "@/lib/Redux/Reducers/RadymadeSlice";
+import CompanySlice from "@/lib/Redux/Reducers/CompanySlice";
 export const store = configureStore({
   reducer: {
-    ReadyMadeItems: ReadyMadeSlice
+    ReadyMadeItems: ReadyMadeSlice,
+    CompanyItems: CompanySlice
   },
 })
 
